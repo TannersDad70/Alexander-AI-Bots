@@ -52,13 +52,26 @@ changed() { ! git diff --quiet "$before" "$after" -- "$@"; }
 did_something=0
 
 # --- the app ---------------------------------------------------------------
-if [ "$force_app" = "1" ] || changed app/; then
+# Publishing stamps two values into the live copy (the asset version in
+# index.html, the build id in config.js) and writes version.json, so those
+# are compared with the stamped parts normalised away — otherwise every run
+# would look like a change and redeploy forever.
+norm() { sed 's/?v=[0-9]*/?v=X/g; s/build: "[^"]*"/build: "X"/' "$1"; }
+app_changed=0
+if ! diff -rq --exclude=version.json --exclude=index.html --exclude=config.js \
+        --exclude='*.bak-*' --exclude='*.tar' "$REPO/app" "$LIVE" >/dev/null 2>&1; then
+  app_changed=1
+fi
+diff -q <(norm "$REPO/app/index.html") <(norm "$LIVE/index.html") >/dev/null 2>&1 || app_changed=1
+diff -q <(norm "$REPO/app/config.js") <(norm "$LIVE/config.js") >/dev/null 2>&1 || app_changed=1
+
+if [ "$force_app" = "1" ] || [ "$app_changed" = "1" ] || changed app/; then
   rsync -a --delete --exclude '*.bak-*' --exclude '*.tar' "$REPO/app/" "$LIVE/"
   if /home/aais/bin/deploy-app.sh >>"$LOG" 2>&1; then
-    log "deployed app from ${after:0:7}"
+    log "deployed app (${after:0:7})"
     did_something=1
   else
-    log "deploy-app.sh failed for ${after:0:7}"
+    log "deploy-app.sh failed (${after:0:7})"
   fi
 fi
 
