@@ -216,11 +216,11 @@ PAGE = """<!doctype html>
   </p>
 
   <h3>Create an account and add credit</h3>
-  <div class="step"><b class="num">1</b> Go to <b>openrouter.ai</b> and create an account
+  <div class="step"><b class="num">1</b> Go to <a href="https://openrouter.ai/" target="_blank" rel="noopener">openrouter.ai</a> and create an account
     (signing in with Google or GitHub is fine).</div>
   <div class="step"><b class="num">2</b> Open <b>Credits</b> in your account and add money.
     Even <b>$5</b> is plenty to start; you can top it up whenever you like.</div>
-  <div class="step"><b class="num">3</b> Open <b>Keys</b> (openrouter.ai/keys) and press
+  <div class="step"><b class="num">3</b> Open <b>Keys</b> (<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a>) and press
     <b>Create Key</b>. Name it after this app, then copy the key &mdash; it starts with
     <code>sk-or-v1-</code> and is only shown once.</div>
 
@@ -235,7 +235,7 @@ PAGE = """<!doctype html>
   <p>
     That is exactly why it deserves care. <b>A key can spend your balance.</b> Treat it the way
     you would a card number: paste it here, keep it out of chats, emails and screenshots, and
-    if you ever think it has been seen, make a new one at openrouter.ai/keys and save it here
+    if you ever think it has been seen, make a new one at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> and save it here
     (you can delete the old key there too).
   </p>
   <p>
@@ -254,6 +254,19 @@ PAGE = """<!doctype html>
     <div><b>Your agents are running on:</b> <code id="model">checking&hellip;</code></div>
     <div style="margin-top:6px;color:#9fb6d9">OpenRouter key: <span id="keystate">checking&hellip;</span></div>
   </div>
+
+  <h3>Change the model your bots use</h3>
+  <p>
+    Any model OpenRouter publishes can be used here. Paste the model id exactly as OpenRouter
+    writes it (for example <code>deepseek/deepseek-v4.1-flash</code>) &mdash; browse them at
+    <a href="https://openrouter.ai/models" target="_blank" rel="noopener">openrouter.ai/models</a>.
+    The app restarts with the new model in about half a minute.
+  </p>
+  <form id="modelform">
+    <input type="text" id="modelinput" name="model" placeholder="vendor/model" autocomplete="off" spellcheck="false">
+    <button type="submit">Save model &amp; restart</button>
+  </form>
+  <div id="modelresult"></div>
 
   <h2>Giving your bots the live web (TinyFish)</h2>
   <p>
@@ -305,6 +318,8 @@ PAGE = """<!doctype html>
       if (r.ok) {{
         model.textContent = d.model || 'unknown';
         state.textContent = d.key || 'unknown';
+        const modelInput = document.getElementById('modelinput');
+        if (modelInput && !modelInput.value) modelInput.value = d.model || '';
       }} else {{
         model.textContent = 'unavailable';
         state.textContent = 'unavailable';
@@ -315,6 +330,34 @@ PAGE = """<!doctype html>
     }}
   }}
   refreshInfo();
+
+  const modelForm = document.getElementById('modelform');
+  const modelResult = document.getElementById('modelresult');
+  modelForm.addEventListener('submit', async (e) => {{
+    e.preventDefault();
+    const model = document.getElementById('modelinput').value.trim();
+    modelResult.className = '';
+    modelResult.textContent = 'Saving...';
+    try {{
+      const r = await fetch('/save-model', {{
+        method: 'POST',
+        headers: {{ 'Content-Type': 'application/json' }},
+        body: JSON.stringify({{ model }}),
+      }});
+      const data = await r.json().catch(() => ({{}}));
+      if (r.ok && data.ok) {{
+        modelResult.className = 'ok';
+        modelResult.textContent = data.message || 'Saved. The app is restarting with the new model.';
+        setTimeout(refreshInfo, 3000);
+      }} else {{
+        modelResult.className = 'bad';
+        modelResult.textContent = data.error || ('Could not save the model (' + r.status + ').');
+      }}
+    }} catch (err) {{
+      modelResult.className = 'bad';
+      modelResult.textContent = 'Could not reach the server. Try again.';
+    }}
+  }});
 
   const form = document.getElementById('keyform');
   const result = document.getElementById('result');

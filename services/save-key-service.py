@@ -20,6 +20,7 @@ INSTANCES = {
 }
 SECRET_FILE = Path.home() / ".config/openbot-save-key.secret"  # shared with Caddy
 KEY_RE = re.compile(r"^sk-or-v1-[A-Za-z0-9]{16,}$")
+MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._:-]*$")
 
 
 def secret() -> str:
@@ -61,6 +62,27 @@ def current_model(env_path: str, model_yaml: str) -> tuple[str, str]:
     except OSError:
         pass
     return from_yaml or from_env, from_env
+
+
+def write_model(env_path: str, model_yaml: str, model: str) -> None:
+    """Set the model the agents run on, in the env file and the tenant model file."""
+    lines = Path(env_path).read_text().splitlines()
+    for var in ("BOT_MODEL", "AGENT_BOT_MODEL"):
+        replaced = False
+        for i, line in enumerate(lines):
+            if line.startswith(var + "="):
+                lines[i] = f"{var}={model}"
+                replaced = True
+        if not replaced:
+            lines.append(f"{var}={model}")
+    Path(env_path).write_text("\n".join(lines) + "\n")
+    try:
+        text = Path(model_yaml).read_text()
+    except OSError:
+        return
+    updated = re.sub(r"(?m)^(\s*default_model:\s*).*$", rf"\g<1>{model}", text, count=1)
+    if updated != text:
+        Path(model_yaml).write_text(updated)
 
 
 def key_state(env_path: str) -> str:
@@ -118,7 +140,8 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     def do_POST(self) -> None:
-        if self.path.rstrip("/") != "/save-key":
+        route = self.path.rstrip("/")
+        if route not in ("/save-key", "/save-model"):
             self._json(404, {"error": "Not found."})
             return
 
@@ -139,6 +162,20 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length) or b"{}")
         except Exception:
             self._json(400, {"error": "Could not read the request."})
+            return
+
+        if route == "/save-model":
+            model = str(payload.get("model", "")).strip()
+            if not MODEL_RE.match(model):
+                self._json(400, {"error": "That does not look like an OpenRouter model id (it should look like vendor/model)."})
+                return
+            try:
+                write_model(env_path, model_yaml, model)
+            except OSError as error:
+                self._json(500, {"error": f"Could not write the model: {error}"})
+                return
+            restart(container)
+            self._json(200, {"ok": True, "message": "Saved. The app is restarting with the new model - give it about 30 seconds."})
             return
 
         key = str(payload.get("key", "")).strip()
