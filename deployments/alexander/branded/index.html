@@ -216,5 +216,58 @@
 
 
     <script src="/user-menu.js" defer></script>
+    <script>
+      /* ------------------------------------------------------------------
+         A coworker made in a conversation has no channel, so the sidebar
+         never lists it. The first page load after one is created, make its
+         channel here; the sidebar then shows it under the coworker's name.
+         ------------------------------------------------------------------ */
+      (function () {
+        function ensureCoworkerChannels() {
+          var pending = [];
+          Promise.all([
+            fetch("/api/agents", { cache: "no-store" }).then(function (r) { return r.json(); }),
+            fetch("/api/channels?limit=200", { cache: "no-store" }).then(function (r) { return r.json(); })
+          ]).then(function (res) {
+            var agents = (res[0] && res[0].agents) || [];
+            var channels = (res[1] && res[1].channels) || [];
+            var have = {};
+            channels.forEach(function (c) {
+              (c.agentIds || []).forEach(function (id) { have[id] = 1; });
+            });
+            agents.forEach(function (a) {
+              if (!a.mine || a.builtIn || a.systemOwned || a.hidden) return;
+              if (have[a.id]) return;
+              if (sessionStorage.getItem("ob-channel-" + a.id)) return;
+              pending.push(
+                fetch("/api/channels", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ agentIds: [a.id] })
+                }).then(function (r) {
+                  if (r.ok) sessionStorage.setItem("ob-channel-" + a.id, "1");
+                  return r.ok;
+                }).catch(function () { return false; })
+              );
+            });
+            if (!pending.length) {
+              sessionStorage.removeItem("ob-channel-reloaded");
+              return;
+            }
+            Promise.all(pending).then(function (results) {
+              if (results.some(Boolean) && !sessionStorage.getItem("ob-channel-reloaded")) {
+                sessionStorage.setItem("ob-channel-reloaded", "1");
+                setTimeout(function () { location.reload(); }, 800);
+              }
+            });
+          }).catch(function () {});
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", ensureCoworkerChannels);
+        } else {
+          ensureCoworkerChannels();
+        }
+      })();
+    </script>
   </body>
 </html>
