@@ -10,7 +10,6 @@
  * and `apkUrl` to the public URL of the built APK file.
  * ============================================================ */
 /* Deployed from the business repository (TannersDad70/Alexander-AI-Bots). */
-/* Edited on GitHub - should reach the live app via the timer. */
 window.AB_CONFIG = {
   /* ---- Brand ---- */
   productName: "Alexander AI Solutions",
