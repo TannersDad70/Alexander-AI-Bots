@@ -3,7 +3,8 @@
 #
 # This is the second half of the workflow: changes are made in
 # github.com/TannersDad70/Alexander-AI-Bots, and this brings them to the
-# deployment in the field. It runs from a systemd timer.
+# deployment in the field. It runs when "Update the app" is pressed (through
+# the update service), and by hand.
 #
 #   * app/                    -> the live app directory, then a new build
 #                                (services/deploy-app.sh stamps build id +
@@ -39,20 +40,6 @@ if ! git fetch --quiet origin main || ! git merge --quiet --ff-only FETCH_HEAD; 
   exit 0
 fi
 after="$(git rev-parse HEAD)"
-
-# The publisher publishes itself too: the machine runs bin/deploy-from-repo.sh,
-# so a change committed to this file would otherwise never take effect. Install
-# the repository's copy atomically; the running process keeps the old file and
-# the next run starts on the new one.
-if ! cmp -s "$REPO/services/deploy-from-repo.sh" "$0"; then
-  tmp="$0.new.$$"
-  if cp "$REPO/services/deploy-from-repo.sh" "$tmp" && chmod +x "$tmp" && mv -f "$tmp" "$0"; then
-    log "publisher updated — takes effect next run"
-  else
-    rm -f "$tmp"
-    log "publisher update failed (${after:0:7})"
-  fi
-fi
 
 changed() { ! git diff --quiet "$before" "$after" -- "$@"; }
 did_something=0
