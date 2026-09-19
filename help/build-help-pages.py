@@ -6,7 +6,9 @@ memory, Skills, and how to set up OpenRouter - including a form that saves a
 new OpenRouter API key into that app's own .env file.
 """
 import html
+import json
 import os
+import shutil
 
 SITES = [
     {
@@ -347,19 +349,44 @@ PAGE = """<!doctype html>
 """
 
 
+def write_site(out_dir: str, site: dict, hero: str | None = None) -> None:
+    os.makedirs(out_dir, exist_ok=True)
+    page = PAGE.format(
+        name=html.escape(site["name"]),
+        url=site["url"],
+        env=html.escape(site["env"]),
+    )
+    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as fh:
+        fh.write(page)
+    if hero and os.path.exists(hero):
+        shutil.copy2(hero, os.path.join(out_dir, "hero.png"))
+    print("wrote", os.path.join(out_dir, "index.html"))
+
+
 def main() -> None:
-    root = "/home/youruser/help-site"
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", help="path to this deployment's deployment.json")
+    parser.add_argument("--out", help="output directory for the help site")
+    parser.add_argument("--hero", help="hero image to copy beside the page")
+    args = parser.parse_args()
+
+    if args.config:
+        with open(args.config, encoding="utf-8") as fh:
+            cfg = json.load(fh)
+        site = {
+            "slug": cfg["slug"],
+            "name": cfg["app_name"],
+            "url": cfg["app_url"],
+            "env": cfg["env"],
+        }
+        write_site(args.out or os.path.join("/home/aais/help-site", cfg["slug"]), site, args.hero)
+        return
+
+    root = "/home/aais/help-site"
     for site in SITES:
-        out_dir = os.path.join(root, site["slug"])
-        os.makedirs(out_dir, exist_ok=True)
-        page = PAGE.format(
-            name=html.escape(site["name"]),
-            url=site["url"],
-            env=html.escape(site["env"]),
-        )
-        with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as fh:
-            fh.write(page)
-        print("wrote", os.path.join(out_dir, "index.html"))
+        write_site(os.path.join(root, site["slug"]), site)
 
 
 if __name__ == "__main__":
