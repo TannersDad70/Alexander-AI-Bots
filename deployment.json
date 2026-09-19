@@ -1,0 +1,9 @@
+{
+  "slug": "alexander",
+  "title": "Alexander AI Bot",
+  "app_name": "Alexander AI Bot",
+  "app_url": "https://alexander-bot.jays-web.org/",
+  "container": "openbot",
+  "vault": "/home/aais/Documents/AlexanderVault",
+  "vault_site": "/home/aais/var/vault-site/alexander"
+}

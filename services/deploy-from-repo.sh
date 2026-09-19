@@ -93,6 +93,17 @@ if [ -d "$DEPLOY/branded" ]; then
   done
 fi
 
+# --- vault logging ----------------------------------------------------------
+# The vault logger, the full conversation notes and the graph ship with the
+# app: (re)install this deployment's timer from this repository.
+if [ -x "$REPO/services/install-vault-service.sh" ] && [ -f "$REPO/deployment.json" ]; then
+  if "$REPO/services/install-vault-service.sh" >>"$LOG" 2>&1; then
+    log "vault service installed"
+  else
+    log "vault service install failed"
+  fi
+fi
+
 if [ "$did_something" = "1" ]; then
   echo "RESULT=changed"
 else

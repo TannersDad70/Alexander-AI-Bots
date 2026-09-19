@@ -24,7 +24,7 @@ VAULTS = [
      "https://davis-assistant.jays-web.org/"),
 ]
 OUT_ROOT = "/home/aais/var/vault-site"
-GRAPH_TEMPLATE = "/home/aais/bin/vault-graph.tpl"
+GRAPH_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vault-graph.tpl")
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -110,7 +110,7 @@ PAGE = """<!doctype html>
     </p>
     <p>
       Two records are written for you automatically: <b>Activity Log</b> (every action taken, with
-      the decision behind it) and <b>Conversations</b> (each channel's latest message).
+      the decision behind it) and <b>Conversations</b> (every channel's full transcript).
     </p>
   </div>
 
@@ -237,8 +237,9 @@ def build_graph(vault: str, notes) -> dict:
     return {"nodes": nodes, "links": links}
 
 
-def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str) -> None:
-    out_dir = os.path.join(OUT_ROOT, slug_name)
+def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str,
+          out_dir: str | None = None) -> None:
+    out_dir = out_dir or os.path.join(OUT_ROOT, slug_name)
     os.makedirs(out_dir, exist_ok=True)
     notes = collect(vault)
 
@@ -290,8 +291,22 @@ def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str) -
 
 
 if __name__ == "__main__":
-    os.makedirs(OUT_ROOT, exist_ok=True)
-    for slug_name, app_name, title, vault, app_url in VAULTS:
-        if os.path.isdir(vault):
-            build(slug_name, app_name, title, vault, app_url)
-    print("vault site + graph rebuilt")
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", help="path to this deployment's deployment.json")
+    args = parser.parse_args()
+
+    if args.config:
+        with open(args.config, encoding="utf-8") as fh:
+            cfg = json.load(fh)
+        if os.path.isdir(cfg["vault"]):
+            build(cfg["slug"], cfg["app_name"], cfg["title"], cfg["vault"],
+                  cfg["app_url"], cfg["vault_site"])
+        print(f"{cfg['slug']}: vault site + graph rebuilt")
+    else:
+        os.makedirs(OUT_ROOT, exist_ok=True)
+        for slug_name, app_name, title, vault, app_url in VAULTS:
+            if os.path.isdir(vault):
+                build(slug_name, app_name, title, vault, app_url)
+        print("vault site + graph rebuilt")
