@@ -106,15 +106,25 @@ It is served from one directory for all deployments, so `services/deploy-app.sh`
 is what publishes a change: it bumps the asset version, stamps a build id, and
 writes `version.json` for the update button.
 
-## Keeping this repository current
+## How a change reaches the deployments
 
-`tools/sync-from-live.sh` refreshes `app/` and `services/` from the live machine,
-so a commit captures exactly what is deployed:
+**This repository is the source of truth.** The workflow:
 
-```bash
-tools/sync-from-live.sh
-git add -A && git commit -m "Sync from live" && git push
-```
+1. **Change the repository** — here on GitHub, or by asking the assistant.
+2. A timer on the deployment host pulls this repository every five minutes.
+   When `app/` changed, it copies the app into the live directory and
+   publishes a new build (`services/deploy-app.sh`: new build id, fresh
+   `version.json`).
+3. **On any device, open the signed-in menu and choose "Update the app"**
+   (on a phone: *Settings → App updates*). It drops the saved copy on that
+   device and reloads the newest build.
+
+Changes to `docs/`, `services/`, the branding kit or the deployment templates
+do not touch the running app — they take effect when they are applied.
+
+`tools/sync-from-live.sh` still exists for the reverse direction (capturing a
+hotfix made on the machine into a commit), but the normal direction is
+**repository → deployment**.
 
 ## Mobile
 
