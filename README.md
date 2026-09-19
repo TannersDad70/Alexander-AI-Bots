@@ -77,13 +77,43 @@ what stays the same.
 ## Repository layout
 
 ```
+app/               The companion app: chat, bots, computers, activity, vault and graph
 branding/          The look: page shell, bundle patch script, assets
 deploy/            Deployment kit: env template, container run, tunnel, login gate
 tenant-package/    The bots, channels, brand and model for a deployment
 help/              Generates the in-app Help pages (including the OpenRouter key form)
 vault/             Generates the Obsidian vault pages and the graph
-services/          The small service that saves a new OpenRouter key into a deployment's .env
+pwa/               Makes a deployment installable as a phone app
+services/          The small services: key saving, vault logging, the checks, app deploys
+tools/             Housekeeping: sync the live files back into this repository
 docs/              How it works, branding for customers, updating from OpenBot
+```
+
+## The companion app
+
+`app/` is the phone-first app served by every deployment at `/app/`. It is plain
+HTML/CSS/JS — no build step — and it talks to the deployment it is served from:
+
+- **Chat** with any bot on the deployment, streamed live
+- **Bots** — every bot, straight into its own computer
+- **Computer** — watch the bot work, take control, hand it back
+- **Activity** — the audit trail, newest first
+- **Vault and Graph** — the bot's notes and their graph
+- **Settings** — OpenRouter key, model, theme, and **App updates**: it checks the
+  deployment for a newer build and updates itself in place
+
+It is served from one directory for all deployments, so `services/deploy-app.sh`
+is what publishes a change: it bumps the asset version, stamps a build id, and
+writes `version.json` for the update button.
+
+## Keeping this repository current
+
+`tools/sync-from-live.sh` refreshes `app/` and `services/` from the live machine,
+so a commit captures exactly what is deployed:
+
+```bash
+tools/sync-from-live.sh
+git add -A && git commit -m "Sync from live" && git push
 ```
 
 ## Mobile

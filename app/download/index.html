@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get the mobile app — Alexander Bots</title>
+<meta name="description" content="Download the Alexander Bots Android app (APK) or add the web app to your home screen.">
+<style>
+  :root {
+    --navy: #041027;
+    --navy-2: #071a3d;
+    --gold: #ffd479;
+    --gold-dim: #c9a44e;
+    --ink: #eaf2ff;
+    --ink-dim: #9db2d6;
+    --card: rgba(255, 255, 255, 0.045);
+    --line: rgba(255, 212, 121, 0.22);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #0a2452 0%, transparent 60%),
+      radial-gradient(900px 500px at 85% 110%, #0d2f66 0%, transparent 55%),
+      var(--navy);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 64px; }
+  header.hero { text-align: center; margin-bottom: 36px; }
+  header.hero img.logo {
+    width: 96px; height: 96px; border-radius: 24px;
+    box-shadow: 0 0 32px rgba(255, 212, 121, 0.35);
+    background: var(--navy-2);
+  }
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    margin: 18px 0 6px;
+    color: var(--gold);
+    text-shadow: 0 0 18px rgba(255, 212, 121, 0.55), 0 0 60px rgba(255, 212, 121, 0.25);
+    letter-spacing: 0.5px;
+  }
+  .tagline { color: var(--ink-dim); margin: 0 0 4px; font-size: 1.05rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(6px);
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 1.25rem;
+    color: var(--gold);
+    text-shadow: 0 0 12px rgba(255, 212, 121, 0.4);
+  }
+  .big-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1206;
+    background: linear-gradient(180deg, #ffe9ad 0%, var(--gold) 55%, #e8b64c 100%);
+    border-radius: 14px;
+    padding: 18px 24px;
+    box-shadow: 0 0 28px rgba(255, 212, 121, 0.45), 0 6px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .big-btn:hover, .big-btn:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px rgba(255, 212, 121, 0.6), 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  .version {
+    text-align: center; color: var(--ink-dim);
+    font-size: 0.9rem; margin: 10px 0 0;
+  }
+  .notice {
+    border: 1px dashed var(--gold-dim);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--gold);
+    font-size: 0.9rem;
+    margin-top: 14px;
+  }
+  #qr-block { text-align: center; margin-top: 20px; }
+  #qr {
+    display: inline-block; padding: 12px; background: #fff;
+    border-radius: 12px; box-shadow: 0 0 24px rgba(255, 212, 121, 0.3);
+  }
+  #qr img, #qr canvas { display: block; }
+  .qr-caption { color: var(--ink-dim); font-size: 0.9rem; margin-top: 8px; }
+  ol.steps { margin: 0; padding-left: 1.4em; }
+  ol.steps li { margin-bottom: 10px; }
+  ol.steps li::marker { color: var(--gold); font-weight: 700; }
+  code {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px; padding: 1px 7px;
+    font-size: 0.92em; color: var(--ink);
+  }
+  .os-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .os-btn {
+    display: block; text-align: center; text-decoration: none;
+    color: var(--gold); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 10px; font-weight: 600; background: rgba(255, 212, 121, 0.06);
+    transition: background 0.12s ease, transform 0.12s ease;
+  }
+  .os-btn:hover, .os-btn:focus-visible { background: rgba(255, 212, 121, 0.14); transform: translateY(-1px); }
+  .os-btn small { display: block; font-weight: 400; color: var(--ink-dim); font-size: 0.8rem; margin-top: 2px; }
+  .back { text-align: center; margin-top: 28px; }
+  .back a { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .back a:hover { border-bottom-color: var(--gold); }
+  footer {
+    text-align: center; color: var(--ink-dim); font-size: 0.85rem;
+    margin-top: 44px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  footer a { color: var(--gold-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <img class="logo" src="../assets/logo.svg" alt="Alexander Bots logo" onerror="this.style.display='none'">
+    <h1 id="hero-title">Get the mobile app</h1>
+    <p class="tagline" id="hero-tagline">AI coworkers you can hand real work to.</p>
+  </header>
+
+  <section class="card" aria-labelledby="android-h">
+    <h2 id="android-h">Android app (APK)</h2>
+    <a class="big-btn" id="apk-btn" href="#">&#11015; Download for Android (APK)</a>
+    <p class="version" id="apk-version"></p>
+    <div id="qr-block">
+      <div id="qr" role="img" aria-label="QR code linking to the APK download"></div>
+      <p class="qr-caption">Scan with your phone's camera to download</p>
+    </div>
+    <div class="notice" id="host-notice" hidden>
+      The download links on this page aren't configured yet — the site owner needs to
+      set the real URLs in <code>web/config.js</code> (<code>apkUrl</code> and
+      <code>downloadPageUrl</code>). See the hosting guide in <code>docs/</code>.
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="install-h">
+    <h2 id="install-h">How to install (sideload)</h2>
+    <ol class="steps">
+      <li>Tap the <strong>Download for Android (APK)</strong> button above to get the APK file.</li>
+      <li>Open the downloaded file — from the download notification or your <code>Downloads</code> folder.</li>
+      <li>If Android asks, allow <strong>"Install unknown apps"</strong> for your browser
+        (<code>Settings &rarr; Apps &rarr; Special app access &rarr; Install unknown apps</code>).</li>
+      <li>Tap <strong>Install</strong>, then <strong>Open</strong>.</li>
+      <li>Enter your OpenRouter API key in <strong>Settings</strong> — your key stays on your device.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="pwa-h">
+    <h2 id="pwa-h">No download? Add to Home Screen (PWA)</h2>
+    <p style="margin-top:0">You can install the web app as a home-screen icon instead — no APK needed:</p>
+    <ol class="steps">
+      <li><strong>Android (Chrome):</strong> open the app, tap the <code>&#8942;</code> menu,
+        then <strong>"Add to Home screen"</strong> &rarr; <strong>Add</strong>.</li>
+      <li><strong>iPhone (Safari):</strong> open the app, tap <strong>Share</strong>,
+        then <strong>"Add to Home Screen"</strong> &rarr; <strong>Add</strong>.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="desktop-h">
+    <h2 id="desktop-h">Desktop apps</h2>
+    <div class="os-grid">
+      <a class="os-btn" id="dl-win" href="#">&#128187; Windows<small>installer</small></a>
+      <a class="os-btn" id="dl-mac" href="#">&#127823; macOS<small>disk image</small></a>
+      <a class="os-btn" id="dl-linux" href="#">&#128039; Linux<small>package</small></a>
+    </div>
+    <p class="version">Pick the installer for your OS from the downloads folder.</p>
+  </section>
+
+  <div class="back">
+    <a href="../index.html">&larr; Back to the app</a>
+  </div>
+
+  <footer>
+    <span id="foot-brand">Alexander Bots</span> &middot; MIT License &middot;
+    Built on <a href="https://github.com/CopilotKit/OpenBot">OpenBot</a> by CopilotKit
+  </footer>
+
+</div>
+
+<script src="../config.js"></script>
+<script src="../vendor/qrcode.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var cfg = (typeof window.AB_CONFIG === "object" && window.AB_CONFIG) || {};
+  var name = cfg.productShort || cfg.productName || "Alexander Bots";
+  var tagline = cfg.tagline || "AI coworkers you can hand real work to.";
+  var apkUrl = cfg.apkUrl || "";
+  var desktopUrl = cfg.desktopDownloadUrl || "";
+  var apkVersion = cfg.apkVersion || cfg.appVersion || "";
+  var unconfigured = /YOUR-HOST/i.test(apkUrl) || !apkUrl;
+
+  document.title = "Get the mobile app \u2014 " + name;
+  document.getElementById("hero-title").textContent = name;
+  document.getElementById("hero-tagline").textContent = tagline;
+  document.getElementById("foot-brand").textContent = name;
+
+  // APK download button
+  var apkBtn = document.getElementById("apk-btn");
+  apkBtn.href = apkUrl || "#";
+  if (apkVersion) {
+    document.getElementById("apk-version").textContent = "Version " + apkVersion;
+  }
+  document.getElementById("host-notice").hidden = !unconfigured;
+
+  // Desktop installer links — all resolve inside the configured downloads folder
+  ["dl-win", "dl-mac", "dl-linux"].forEach(function (id) {
+    document.getElementById(id).href = desktopUrl || "#";
+  });
+
+  // QR code: render only if the vendored library actually loaded and we have a URL.
+  var qrBlock = document.getElementById("qr-block");
+  function hideQr() { qrBlock.style.display = "none"; }
+  if (unconfigured || typeof window.QRCode !== "function") {
+    hideQr();
+  } else {
+    try {
+      var level = (window.QRCode.CorrectLevel && window.QRCode.CorrectLevel.M);
+      new window.QRCode(document.getElementById("qr"), {
+        text: apkUrl,
+        width: 180,
+        height: 180,
+        correctLevel: level
+      });
+    } catch (e) {
+      hideQr();
+    }
+  }
+})();
+</script>
+</body>
+</html>

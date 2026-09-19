@@ -1,0 +1,51 @@
+<!--
+  Alexander Bots — master logo
+  Alexander AI Solutions · dark navy #041027 · glowing gold #ffd479
+  The "A" is drawn with paths (not <text>) so it renders identically everywhere.
+  Rasterized to PNGs via assets/build_icons.py (PIL).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Alexander Bots logo">
+  <defs>
+    <!-- Deep navy with a subtle radial vignette -->
+    <radialGradient id="bgVignette" cx="50%" cy="42%" r="78%">
+      <stop offset="0%" stop-color="#0b2148"/>
+      <stop offset="55%" stop-color="#041027"/>
+      <stop offset="100%" stop-color="#01060f"/>
+    </radialGradient>
+
+    <!-- Warm gold with a soft vertical sheen -->
+    <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe6a8"/>
+      <stop offset="45%" stop-color="#ffd479"/>
+      <stop offset="100%" stop-color="#f0b23e"/>
+    </linearGradient>
+
+    <!-- Layered warm glow: wide soft halo + tighter inner bloom + crisp art -->
+    <filter id="aGlow" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="26" result="halo"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="bloom"/>
+      <feMerge>
+        <feMergeNode in="halo"/>
+        <feMergeNode in="bloom"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded-square badge -->
+  <rect x="8" y="8" width="496" height="496" rx="112" fill="url(#bgVignette)"/>
+
+  <!-- Thin gold ring near the badge edge -->
+  <rect x="30" y="30" width="452" height="452" rx="98"
+        fill="none" stroke="#ffd479" stroke-opacity="0.38" stroke-width="3"/>
+
+  <!-- Geometric "A": two legs (outer triangle minus inner triangle) + crossbar -->
+  <g filter="url(#aGlow)">
+    <path fill="url(#goldFill)" fill-rule="evenodd" d="
+      M 256 108
+      L 388 404 L 124 404 Z
+      M 256 216
+      L 326 404 L 186 404 Z"/>
+    <path fill="url(#goldFill)" d="M 190 302 L 322 302 L 322 338 L 190 338 Z"/>
+  </g>
+</svg>
