@@ -9,6 +9,7 @@
  * to the public URL of the "Get the app" page (web/download/),
  * and `apkUrl` to the public URL of the built APK file.
  * ============================================================ */
+/* Deployed from the business repository (TannersDad70/Alexander-AI-Bots). */
 window.AB_CONFIG = {
   /* ---- Brand ---- */
   productName: "Alexander AI Solutions",
