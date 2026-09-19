@@ -18,9 +18,12 @@ window.AB_CONFIG = {
 
   /* ---- Download / mobile ---- */
   // Public URL of the "Get the mobile app" page (web/download/index.html).
-  // The QR code in the app header points here.
-  downloadPageUrl: "https://YOUR-HOST/get-the-app/",
-  // Direct link to the Android APK served from your host.
+  // The QR code in the app header points here. Relative, so every deployment
+  // resolves it against its own address (/app/download/).
+  downloadPageUrl: "download/",
+  // Direct link to the Android APK served from your host. Leave the
+  // YOUR-HOST placeholder until an APK is published: the download page
+  // hides its QR and says so rather than linking to a missing file.
   apkUrl: "https://YOUR-HOST/downloads/alexander-bots.apk",
   // Where desktop installers can be fetched (links on the download page).
   desktopDownloadUrl: "https://YOUR-HOST/downloads/",
@@ -42,9 +45,9 @@ window.AB_CONFIG = {
   apiBase: "",
 
   /* ---- Meta ---- */
-  supportEmail: "support@YOUR-DOMAIN",
+  supportEmail: "jay.aais@hey.com",
   appVersion: "1.0.0",
   // Bumped by bin/deploy-app.sh on every deploy; Settings → App updates
   // compares it against version.json to spot a newer build.
-  build: "2026-09-18.2256",
+  build: "2026-09-19.0002",
 };
