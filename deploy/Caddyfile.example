@@ -66,11 +66,9 @@
 }
 
 # The Obsidian vault pages and the graph, one path per deployment.
+# No login here: the vault and graph open directly.
 :9083 {
 	handle /mybots/* {
-		basic_auth {
-			YourUser $2a$14$replace-with-a-caddy-hash
-		}
 		uri strip_prefix /mybots
 		root * /home/youruser/var/vault-site/mybots
 		file_server
