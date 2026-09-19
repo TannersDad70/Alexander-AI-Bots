@@ -34,3 +34,18 @@ python3 branding/patch-app-bundle.py \
 
 Then mount `branding/index.html` and `branding/app-bundle.js` over the files inside the
 container (see `deploy/docker-run.example.sh`).
+
+## The signed-in user's menu
+
+The popup on the signed-in user's email row carries the deployment's links —
+Obsidian vault and graph, Skills, Agents, OpenRouter, Help — plus two actions:
+
+- **Get the app** opens a QR card for that deployment's download page.
+- **Update the app** clears the copy saved in the browser and reloads the
+  newest build. This is how a deployment in the field picks up a change
+  published with `services/deploy-app.sh`.
+
+`set-up-user-menu.py` sets this up (and trims the sidebar to just the user row)
+for every deployment listed at the top of the file. It also patches the app
+bundle so the sidebar links are gone — the bundle is backed up as
+`index-*.js.bak-nav` before it is touched.
