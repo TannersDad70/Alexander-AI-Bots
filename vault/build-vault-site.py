@@ -23,8 +23,8 @@ VAULTS = [
     ("davis", "Davis Carpet", "Davis Carpet Vault", "/home/aais/Documents/DavisVault",
      "https://davis-assistant.jays-web.org/"),
 ]
-OUT_ROOT = "/home/youruser/var/vault-site"
-GRAPH_TEMPLATE = "/home/youruser/alexander-ai-bots/vault/vault-graph.tpl"
+OUT_ROOT = "/home/aais/var/vault-site"
+GRAPH_TEMPLATE = "/home/aais/bin/vault-graph.tpl"
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -69,11 +69,11 @@ PAGE = """<!doctype html>
   .note a {{ color: #7fd1ff; }}
   .empty {{ color: #9fb6d9; }}
   /* phones: never let a long line or a wide block push the page sideways */
-  .note p, .note li, .note h2, .note td, .note th {{ overflow-wrap: anywhere; word-break: break-word; }}
+  .note p, .note li, .note h2, .note td, .note th {{ overflow-wrap: break-word; word-break: normal; }}
   .note pre {{ max-width: 100%; overflow-x: auto; }}
   .note table {{ display: block; max-width: 100%; overflow-x: auto; }}
   .note img {{ max-width: 100%; height: auto; }}
-  .list li {{ overflow-wrap: anywhere; }}
+  .list li {{ overflow-wrap: break-word; }}
   footer {{ margin-top: 40px; color: #6f87ab; font-size: 13px; }}
   @media (max-width: 760px) {{
     .hero {{ padding: 30px 16px 24px; }}

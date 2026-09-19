@@ -82,8 +82,7 @@ def write_actions(vault: str, title: str, rows) -> int:
             bot = r.get("bot") or r.get("event_type") or "deployment"
             action = r.get("action") or r.get("event_type") or ""
             target = r.get("page") or r.get("file") or r.get("command") or ""
-            decision = r.get("decision") or ""
-            bits = [b for b in (action, target, decision) if b]
+            bits = [b for b in (action, target) if b]
             lines.append(f"- `{when}` **{bot}** — {' · '.join(bits)}")
     with open(f"{vault}/Activity Log.md", "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
