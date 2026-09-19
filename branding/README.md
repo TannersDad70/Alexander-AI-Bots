@@ -41,11 +41,12 @@ The popup on the signed-in user's email row carries the deployment's links —
 Obsidian vault and graph, Skills, Agents, OpenRouter, Help — plus two actions:
 
 - **Get the app** opens a QR card for that deployment's download page.
-- **Update the app** clears the copy saved in the browser and reloads the
-  newest build. This is how a deployment in the field picks up a change
-  published with `services/deploy-app.sh`.
+- **Update the app** asks the host to pull this repository and publish it, then
+  reloads. If nothing changed, it says "Everything is up to date."
 
-`set-up-user-menu.py` sets this up (and trims the sidebar to just the user row)
-for every deployment listed at the top of the file. It also patches the app
-bundle so the sidebar links are gone — the bundle is backed up as
-`index-*.js.bak-nav` before it is touched.
+On the deployment this menu lives in `branded/user-menu.css` and
+`branded/user-menu.js`, which are live-only: the publisher never overwrites
+them. `set-up-user-menu.py` predates that split and still injects the menu into
+the page shell; treat it as superseded (the live files are the source now).
+It also patches the app bundle so the sidebar links are gone — the bundle is
+backed up as `index-*.js.bak-nav` before it is touched.

@@ -7,8 +7,9 @@ For each deployment:
     agents, OpenRouter, help, get-the-app, update-the-app)
   * the asset version is bumped so browsers fetch the patched bundle
 
-The popup's "Update the app" clears the saved copy on the device and reloads,
-which is how a deployment in the field picks up a newly published build.
+Superseded: the menu now lives in the deployment's live-only user-menu.css /
+user-menu.js and publishing never overwrites it. Running this script would
+inject the menu back into the page shell, so treat it as historical.
 """
 
 import json
