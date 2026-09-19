@@ -36,19 +36,23 @@ deployment_dir() {
 
 cd "$REPO" || { log "repository missing"; exit 0; }
 
+# A local commit is a publish too, not only a pulled one: --publish-app
+# forces the app step after committing here on the machine.
+force_app=0
+[ "${1:-}" = "--publish-app" ] && force_app=1
+
 before="$(git rev-parse HEAD)"
-if ! git pull --quiet --ff-only origin main; then
+if ! git fetch --quiet origin main || ! git merge --quiet --ff-only FETCH_HEAD; then
   log "pull failed (offline or diverged) — nothing deployed"
   exit 0
 fi
 after="$(git rev-parse HEAD)"
-[ "$before" = "$after" ] && exit 0
 
 changed() { ! git diff --quiet "$before" "$after" -- "$@"; }
 did_something=0
 
 # --- the app ---------------------------------------------------------------
-if changed app/; then
+if [ "$force_app" = "1" ] || changed app/; then
   rsync -a --delete --exclude '*.bak-*' --exclude '*.tar' "$REPO/app/" "$LIVE/"
   if /home/aais/bin/deploy-app.sh >>"$LOG" 2>&1; then
     log "deployed app from ${after:0:7}"
@@ -59,7 +63,9 @@ if changed app/; then
 fi
 
 # --- the page shells and the artwork ---------------------------------------
-if changed deployments/ branding/assets/; then
+# Compared against the live files, not against the pull: shells and artwork
+# carry no machine-stamped values, so a straight comparison is always right.
+if true; then
   for slug in alexander randy state davis; do
     dir="$(deployment_dir "$slug")"
     [ -d "$dir/branded" ] || continue
