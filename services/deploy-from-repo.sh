@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Publish whatever is in the business repository to the live deployments.
+# Publish whatever is in the business repository to the live deployment.
 #
 # This is the second half of the workflow: changes are made in
 # github.com/TannersDad70/Alexander-AI-Bots, and this brings them to the
-# deployments in the field. It runs from a systemd timer.
+# deployment in the field. It runs from a systemd timer.
 #
-#   * app/                 -> the live app directory, then a new build
-#                             (services/deploy-app.sh stamps build id +
-#                             version.json, and the popup's "Update the app"
-#                             hands it to each device)
-#   * deployments/<slug>/  -> that deployment's page shell
+#   * app/                    -> the live app directory, then a new build
+#                                (services/deploy-app.sh stamps build id +
+#                                version.json, and the popup's "Update the app"
+#                                hands it to each device)
+#   * deployments/alexander/  -> the page shell
 #     branded/index.html
-#   * branding/assets/     -> the artwork beside every shell (hero, cards,
-#                             favicons)
+#   * branding/assets/        -> the artwork beside the shell (hero, cards,
+#                                favicons)
 #
 # Anything else in the repository (docs, services, templates) takes effect
 # when it is applied, and never touches a running deployment.
@@ -20,19 +20,11 @@ set -euo pipefail
 
 REPO="/home/aais/alexander-ai-bots"
 LIVE="/home/aais/Projects/alexander-apps/web"
+DEPLOY="/home/aais/openbot"
 LOG="$HOME/.local/state/openbot-app-deploy.log"
 
 mkdir -p "$(dirname "$LOG")"
 log() { echo "$(date -Is) $*" >> "$LOG"; }
-
-deployment_dir() {
-  case "$1" in
-    alexander) echo "/home/aais/openbot" ;;
-    randy)     echo "/home/aais/openbot-randy" ;;
-    state)     echo "/home/aais/openbot-state" ;;
-    davis)     echo "/home/aais/openbot-davis" ;;
-  esac
-}
 
 cd "$REPO" || { log "repository missing"; exit 0; }
 
@@ -89,32 +81,27 @@ if [ "$force_app" = "1" ] || [ "$app_changed" = "1" ] || changed app/; then
   fi
 fi
 
-# --- the page shells and the artwork ---------------------------------------
-# Compared against the live files, not against the pull: shells and artwork
+# --- the page shell and the artwork ----------------------------------------
+# Compared against the live files, not against the pull: the shell and artwork
 # carry no machine-stamped values, so a straight comparison is always right.
-if true; then
-  for slug in alexander randy state davis; do
-    dir="$(deployment_dir "$slug")"
-    [ -d "$dir/branded" ] || continue
+if [ -d "$DEPLOY/branded" ]; then
+  shell="$REPO/deployments/alexander/branded/index.html"
+  if [ -f "$shell" ] && ! cmp -s "$shell" "$DEPLOY/branded/index.html"; then
+    cp "$DEPLOY/branded/index.html" "$DEPLOY/branded/index.html.bak-$(date +%Y%m%d%H%M)" 2>/dev/null || true
+    cp "$shell" "$DEPLOY/branded/index.html"
+    log "page shell updated"
+    did_something=1
+  fi
 
-    shell="$REPO/deployments/$slug/branded/index.html"
-    if [ -f "$shell" ] && ! cmp -s "$shell" "$dir/branded/index.html"; then
-      cp "$dir/branded/index.html" "$dir/branded/index.html.bak-$(date +%Y%m%d%H%M)" 2>/dev/null || true
-      cp "$shell" "$dir/branded/index.html"
-      log "$slug: page shell updated"
+  for asset in "$REPO"/branding/assets/*; do
+    name="$(basename "$asset")"
+    [ "$name" = "README.md" ] && continue
+    [ -f "$asset" ] || continue
+    if ! cmp -s "$asset" "$DEPLOY/branded/$name"; then
+      cp "$asset" "$DEPLOY/branded/$name"
+      log "artwork updated — $name"
       did_something=1
     fi
-
-    for asset in "$REPO"/branding/assets/*; do
-      name="$(basename "$asset")"
-      [ "$name" = "README.md" ] && continue
-      [ -f "$asset" ] || continue
-      if ! cmp -s "$asset" "$dir/branded/$name"; then
-        cp "$asset" "$dir/branded/$name"
-        log "$slug: artwork updated — $name"
-        did_something=1
-      fi
-    done
   done
 fi
 
