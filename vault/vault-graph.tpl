@@ -24,23 +24,48 @@
     background: #081c3c; color: #eaf2ff; font-size: 14px; width: 220px;
   }
   #count { font-size: 13px; color: #9fb6d9; white-space: nowrap; }
+  #settings {
+    padding: 8px 12px; border-radius: 10px; border: 1px solid #2b5390; background: #0b1f42cc;
+    color: #cfe6ff; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap;
+    font-family: inherit;
+  }
+  #settings:hover, #settings.on { background: #12305e; border-color: #3f74c4; }
   canvas { position: fixed; inset: 0; display: block; cursor: grab; }
   canvas.dragging { cursor: grabbing; }
   #hint {
     position: fixed; left: 14px; bottom: 12px; font-size: 13px; color: #7d94b8; z-index: 5;
   }
-  @media (max-width: 760px) {
-    #bar { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
-    #title { font-size: 14px; }
-    #search { width: 100%; margin-left: 0; order: 5; }
-    #count { margin-left: auto; font-size: 12px; }
-    #hint { font-size: 11px; left: 10px; bottom: 8px; right: 10px; }
-    #bar a.back { padding: 7px 11px; font-size: 13px; }
-  }
   #tip {
     position: fixed; pointer-events: none; z-index: 6; padding: 6px 10px; border-radius: 9px;
     background: #0b1f42f2; border: 1px solid #2b5390; font-size: 14px; color: #eaf2ff;
     display: none; max-width: 320px;
+  }
+  #panel {
+    position: fixed; top: 58px; right: 14px; width: 264px; z-index: 7;
+    background: #061530f7; border: 1px solid #2b5390; border-radius: 12px;
+    padding: 12px 14px 14px; display: none; box-shadow: 0 14px 34px rgba(0,0,0,.5);
+  }
+  #panel.open { display: block; }
+  #panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+  #panel-head span { font-weight: 700; font-size: 14px; color: #ffd479; }
+  #panel-head button {
+    padding: 4px 10px; border-radius: 8px; border: 1px solid #2b5390; background: #0b1f42cc;
+    color: #cfe6ff; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  #panel-head button:hover { background: #12305e; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; margin: 11px 0 0; font-size: 13px; color: #cfe6ff; }
+  .row .lbl { grid-column: 1 / 2; }
+  .row .val { grid-column: 2 / 3; color: #9fb6d9; font-variant-numeric: tabular-nums; text-align: right; }
+  .row input[type=range] { grid-column: 1 / 3; width: 100%; accent-color: #4da3ff; margin: 4px 0 0; }
+  @media (max-width: 760px) {
+    #bar { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
+    #title { font-size: 14px; }
+    #search { width: 100%; margin-left: 0; order: 5; }
+    #settings { margin-left: auto; }
+    #count { font-size: 12px; }
+    #hint { font-size: 11px; left: 10px; bottom: 8px; right: 10px; }
+    #bar a.back { padding: 7px 11px; font-size: 13px; }
+    #panel { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; }
   }
 </style>
 </head>
@@ -50,10 +75,15 @@
   <a class="back" href="__VAULT_URL__">Notes</a>
   <span id="title">Obsidian Graph</span>
   <input id="search" placeholder="Filter notes..." autocomplete="off">
+  <button id="settings" type="button">&#9881; Graph settings</button>
   <span id="count"></span>
 </div>
+<div id="panel">
+  <div id="panel-head"><span>Graph settings</span><button id="reset" type="button">Reset</button></div>
+  <div id="controls"></div>
+</div>
 <canvas id="cv"></canvas>
-<div id="hint">drag a dot &middot; scroll to zoom &middot; drag background to pan &middot; click a dot to open its note</div>
+<div id="hint">drag a dot &middot; scroll to zoom &middot; drag background to pan &middot; click a dot to open its note &middot; settings in the top bar</div>
 <div id="tip"></div>
 <script>
 const GRAPH = __GRAPH_JSON__;
@@ -63,6 +93,67 @@ const canvas = document.getElementById('cv');
 const ctx = canvas.getContext('2d');
 const tip = document.getElementById('tip');
 let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+// ---- graph settings (the Obsidian controls) --------------------------------
+const DEFAULTS = {
+  nodeSize: 1,        // 0.2 - 3    bubble size
+  linkDistance: 110,  // 20 - 300   how far apart linked bubbles sit
+  linkForce: 1,       // 0 - 3      how hard the lines pull
+  repel: 1,           // 0 - 3      push between unlinked bubbles
+  center: 1,          // 0 - 1      pull towards the middle
+  textFade: 0.5,      // 0 - 3      zoom at which labels appear
+};
+const S = Object.assign({}, DEFAULTS);
+try { Object.assign(S, JSON.parse(localStorage.getItem('ob_graph_settings') || '{}')); } catch (e) {}
+function saveSettings() {
+  try { localStorage.setItem('ob_graph_settings', JSON.stringify(S)); } catch (e) {}
+}
+
+const CONTROLS = [
+  ['nodeSize', 'Node size', 0.2, 3, 0.1],
+  ['linkDistance', 'Link distance', 20, 300, 5],
+  ['linkForce', 'Link force', 0, 3, 0.1],
+  ['repel', 'Repel force', 0, 3, 0.1],
+  ['center', 'Center force', 0, 1, 0.05],
+  ['textFade', 'Text fade threshold', 0, 3, 0.1],
+];
+
+const panel = document.getElementById('panel');
+const inputs = {};
+(function buildControls() {
+  const box = document.getElementById('controls');
+  for (const [key, label, min, max, step] of CONTROLS) {
+    const row = document.createElement('label');
+    row.className = 'row';
+    const lbl = document.createElement('span');
+    lbl.className = 'lbl';
+    lbl.textContent = label;
+    const val = document.createElement('span');
+    val.className = 'val';
+    const inp = document.createElement('input');
+    inp.type = 'range';
+    inp.min = min; inp.max = max; inp.step = step; inp.value = S[key];
+    val.textContent = S[key];
+    inp.addEventListener('input', () => {
+      S[key] = parseFloat(inp.value);
+      val.textContent = inp.value;
+      saveSettings();
+    });
+    row.append(lbl, val, inp);
+    box.appendChild(row);
+    inputs[key] = { inp, val };
+  }
+})();
+
+document.getElementById('settings').addEventListener('click', (e) => {
+  panel.classList.toggle('open');
+  e.currentTarget.classList.toggle('on', panel.classList.contains('open'));
+});
+document.getElementById('reset').addEventListener('click', () => {
+  Object.assign(S, DEFAULTS);
+  for (const [key, { inp, val }] of Object.entries(inputs)) { inp.value = S[key]; val.textContent = S[key]; }
+  saveSettings();
+});
 
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
@@ -104,7 +195,7 @@ function tick() {
       let d2 = dx * dx + dy * dy;
       if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
       const d = Math.sqrt(d2);
-      const rep = 2600 / d2;
+      const rep = 2600 * S.repel / d2;
       const fx = (dx / d) * rep, fy = (dy / d) * rep;
       a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
     }
@@ -113,22 +204,22 @@ function tick() {
   for (const l of links) {
     const dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
     const d = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-    const target = 110;
-    const f = (d - target) * 0.02;
+    const target = S.linkDistance;
+    const f = (d - target) * 0.02 * S.linkForce;
     const fx = (dx / d) * f, fy = (dy / d) * f;
     l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
   }
   // gravity to centre
   for (const n of nodes) {
-    n.vx += -n.x * 0.004;
-    n.vy += -n.y * 0.004;
+    n.vx += -n.x * 0.004 * S.center;
+    n.vy += -n.y * 0.004 * S.center;
     n.vx *= 0.85; n.vy *= 0.85;
     n.x += n.vx * k * 10;
     n.y += n.vy * k * 10;
   }
 }
 
-function radius(n) { return 5 + Math.min(n.deg, 12) * 1.7; }
+function radius(n) { return (5 + Math.min(n.deg, 12) * 1.7) * S.nodeSize; }
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
@@ -148,6 +239,9 @@ function draw() {
     ctx.stroke();
   }
 
+  // the closer you zoom, the more labels show (Obsidian's text fade threshold)
+  const fade = Math.max(0, Math.min(1, (view.k - S.textFade) / 0.5));
+
   // nodes
   for (const n of nodes) {
     const dim = filter && !match(n);
@@ -161,12 +255,15 @@ function draw() {
     ctx.strokeStyle = 'rgba(10,26,52,.9)';
     ctx.stroke();
 
-    if (!dim && (n.deg > 0 || hover === n || view.k > 1.1)) {
+    const alpha = hover === n ? 1 : fade;
+    if (!dim && alpha > 0.02) {
+      ctx.globalAlpha = alpha;
       ctx.font = `${13 / view.k}px system-ui, sans-serif`;
       ctx.fillStyle = hover === n ? '#ffd479' : 'rgba(226,238,255,.92)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(n.label, n.x, n.y + r + 3 / view.k);
+      ctx.globalAlpha = 1;
     }
   }
   ctx.restore();
