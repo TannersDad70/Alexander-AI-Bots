@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=3" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+    <title>Davis Carpet</title>
+    <!-- Sets the theme before the first paint. Must stay inline and classic: `defer` or `type="module"` runs too late. -->
+    <script>
+      // localStorage throws in some privacy modes; a theme is not worth taking the app down for.
+      try {
+        const dark = window.localStorage.getItem("openbot-theme") === "dark";
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      } catch {}
+    </script>
+    <script type="module" crossorigin src="/assets/index-CbN6XavV.js?v=7"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CNgXKueA.css">
+    <style>
+      /* Davis Carpet. Hero artwork full width behind everything, with dark
+         translucent surfaces so the words can be white and easy to read.
+         Sized generously for comfortable reading. Nothing here blocks input. */
+      html { background: rgb(2, 13, 38); font-size: 22px; }
+      body {
+        background-color: rgb(2, 13, 38);
+        background-image: linear-gradient(rgba(2, 10, 30, 0.45), rgba(2, 10, 30, 0.45)),
+                          url("/alexander-hero-2.png?v=2");
+        background-size: cover, cover;
+        background-position: center, center;
+        background-repeat: no-repeat, no-repeat;
+        background-attachment: fixed, fixed;
+      }
+      #root main { background: none; }
+
+      /* Dark translucent surfaces, so white words read everywhere. */
+      #root .bg-background {
+        background-color: rgba(6, 18, 43, 0.74) !important;
+      }
+      #root .bg-card {
+        background-color: rgba(8, 22, 50, 0.80) !important;
+      }
+      #root .bg-muted {
+        background-color: rgba(10, 26, 56, 0.70) !important;
+      }
+      #root .bg-secondary,
+      #root .bg-accent {
+        background-color: rgba(12, 28, 60, 0.75) !important;
+      }
+      #root .bg-popover {
+        background-color: rgba(6, 16, 40, 0.96) !important;
+      }
+      #root .bg-primary {
+        background-color: rgb(40, 150, 255) !important;
+      }
+      #root .bg-white {
+        background-color: rgba(8, 22, 50, 0.80) !important;
+      }
+
+      /* White centers on the words (not black). */
+      #root, #root * { color: #ffffff !important; }
+
+      /* Side panels stay transparent so the artwork shows through. */
+      #root .bg-sidebar {
+        background-color: transparent !important;
+        --sidebar-foreground: rgb(255, 255, 255);
+        --sidebar-accent-foreground: rgb(255, 255, 255);
+        --sidebar-ring: rgb(90, 160, 255);
+      }
+
+      /* Wider bot side panel, and larger type throughout. */
+      [style*="--sidebar-width"] {
+        --sidebar-width: 430px !important;
+      }
+      #root .text-\[14px\] { font-size: 21px !important; }
+      #root .text-\[13px\] { font-size: 20px !important; }
+      #root .text-\[12px\] { font-size: 18px !important; }
+      #root .text-\[11px\] { font-size: 17px !important; }
+      #root .text-\[10px\] { font-size: 16px !important; }
+      #root .text-xs { font-size: 18px !important; }
+
+      /* Light fire glow, tight so the letters stay crisp. */
+      #root main, #root main *,
+      #root .bg-sidebar, #root .bg-sidebar * {
+        text-shadow: 0 0 7px rgba(255, 218, 120, 1),
+                     0 0 18px rgba(255, 145, 0, 0.9),
+                     0 0 36px rgba(255, 75, 0, 0.65),
+                     0 0 60px rgba(255, 40, 0, 0.4) !important;
+      }
+
+      /* No box behind the words the user sends. */
+      #root [data-align="end"] [data-slot="bubble"],
+      #root [data-align="end"] [data-slot="bubble-content"] {
+        background-color: transparent !important;
+      }
+
+      /* Explore-agent cards: no box at all - the words and the avatar sit
+         straight on the artwork, with the avatar cooled to the site's blue. */
+      #root .bg-foreground\/10 {
+        background-color: transparent !important;
+        border: none !important;
+      }
+      #root .bg-background\/40,
+      #root .bg-background\/50 {
+        background-color: transparent !important;
+      }
+      /* Explore-agent cards carry no art of their own: the words sit straight
+         on the background. */
+      #root .bg-foreground\/10 > div:first-child { display: none !important; }
+      /* Every other bot avatar in the app, cooled to the site's blue. */
+      #root svg[viewBox="0 0 80 80"] {
+        filter: saturate(0.55) brightness(0.75) hue-rotate(190deg);
+      }
+
+      /* Explore-agent cards use the supplied card images. */
+      #root .basis-auto .bg-foreground\/10 {
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+      }
+      #root .basis-auto:nth-child(1) .bg-foreground\/10 { background-image: url("/card-1.png") !important; }
+      #root .basis-auto:nth-child(2) .bg-foreground\/10 { background-image: url("/card-2.png") !important; }
+      #root .basis-auto:nth-child(3) .bg-foreground\/10 { background-image: url("/card-3.png") !important; }
+      #root .basis-auto:nth-child(4) .bg-foreground\/10 { background-image: url("/card-4.png") !important; }
+      #root .basis-auto:nth-child(5) .bg-foreground\/10 { background-image: url("/card-1.png") !important; }
+      #root .basis-auto:nth-child(6) .bg-foreground\/10 { background-image: url("/card-2.png") !important; }
+
+      /* Words you type stay crisp: no glow inside inputs, textareas,
+         selects, the composer, or anything editable - in the main panel
+         and in the side panel alike. */
+      #root input, #root textarea, #root select, #root [contenteditable],
+      #root main input, #root main textarea, #root main select,
+      #root main [contenteditable],
+      #root .bg-sidebar input, #root .bg-sidebar textarea,
+      #root .bg-sidebar select, #root .bg-sidebar [contenteditable] {
+        text-shadow: none !important;
+      }
+      #root input::placeholder, #root textarea::placeholder,
+      #root .bg-sidebar input::placeholder, #root main input::placeholder {
+        text-shadow: none !important;
+      }
+
+      /* ------------------------------------------------------------------
+         Phones: smaller type, lighter glow, comfortable controls.
+         The app collapses its own sidebar on small screens; these rules
+         just size everything for a hand-held screen.
+         ------------------------------------------------------------------ */
+      @media (max-width: 760px) {
+        html { font-size: 17px; }
+        #root .text-\[14px\] { font-size: 16px !important; }
+        #root .text-\[13px\] { font-size: 15px !important; }
+        #root .text-\[12px\] { font-size: 14px !important; }
+        #root .text-\[11px\] { font-size: 13px !important; }
+        #root .text-\[10px\] { font-size: 12px !important; }
+        #root .text-xs { font-size: 14px !important; }
+        [style*="--sidebar-width"] { --sidebar-width: 88vw !important; }
+        #root main, #root main *,
+        #root .bg-sidebar, #root .bg-sidebar * {
+          text-shadow: 0 0 4px rgba(255, 218, 120, 0.9),
+                       0 0 12px rgba(255, 145, 0, 0.65) !important;
+        }
+        body { background-attachment: scroll, scroll; }
+        #root input, #root textarea { font-size: 17px !important; }
+      }
+      @media (max-width: 420px) {
+        html { font-size: 16px; }
+      }
+
+      /* ------------------------------------------------------------------
+         Phones: the nav toggle moves to the bottom of the page, under the
+         composer, so the side panel is easy to open with a thumb.
+         ------------------------------------------------------------------ */
+      @media (max-width: 760px) {
+        #root button[aria-label="Show sidebar"] {
+          position: fixed !important;
+          left: 50% !important;
+          top: auto !important;
+          transform: translateX(-50%) !important;
+          bottom: 4px !important;
+          z-index: 70 !important;
+          width: 40px; height: 40px;
+          border-radius: 999px;
+          background: rgba(9, 24, 52, 0.9) !important;
+          border: 1px solid rgba(90, 160, 255, 0.55) !important;
+          box-shadow: 0 0 14px rgba(60, 130, 255, 0.35);
+          color: #ffffff !important;
+        }
+        #root button[aria-label="Show sidebar"] svg { color: #ffffff !important; }
+      }
+
+      /* ------------------------------------------------------------------
+         The signed-in user's menu: the QR card it opens, and the links that
+         used to sit in the sidebar. The card lives outside #root, so it
+         carries its own colours instead of inheriting the app theme.
+         ------------------------------------------------------------------ */
+      dialog.ob-qr {
+        position: fixed; inset: 0; margin: auto;
+        width: min(430px, 92vw); max-height: 92vh; overflow: auto;
+        border: 1px solid rgba(90, 160, 255, 0.55);
+        border-radius: 18px;
+        background: rgba(6, 16, 40, 0.97);
+        color: #ffffff;
+        padding: 26px 24px 22px;
+        font-size: 17px;
+        box-shadow: 0 0 44px rgba(60, 130, 255, 0.4);
+      }
+      dialog.ob-qr::backdrop { background: rgba(2, 8, 22, 0.72); }
+      dialog.ob-qr h2 {
+        margin: 0 0 8px; font-size: 23px; color: #ffffff;
+        text-shadow: 0 0 7px rgba(255, 218, 120, 1), 0 0 18px rgba(255, 145, 0, 0.9),
+                     0 0 36px rgba(255, 75, 0, 0.65);
+      }
+      dialog.ob-qr p { font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.88); margin: 0 0 18px; }
+      .ob-qr-box {
+        width: 224px; height: 224px; margin: 0 auto 14px;
+        background: #ffffff; border-radius: 12px; padding: 10px; box-sizing: border-box;
+      }
+      .ob-qr-box svg { width: 100%; height: 100%; display: block; }
+      .ob-qr-url { font-size: 13px; word-break: break-all; text-align: center; color: rgba(255, 255, 255, 0.72); margin: 0 0 18px; }
+      .ob-qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .ob-qr-btn {
+        border: 0; border-radius: 10px; padding: 10px 16px;
+        font: inherit; font-size: 16px; cursor: pointer; text-decoration: none;
+      }
+      .ob-qr-btn.primary { background: rgb(40, 150, 255); color: #ffffff; }
+      .ob-qr-btn.ghost { background: transparent; border: 1px solid rgba(90, 160, 255, 0.55); color: #ffffff; }
+      .ob-qr-close {
+        position: absolute; top: 10px; right: 12px; background: transparent;
+        border: 0; color: #ffffff; font-size: 19px; line-height: 1; cursor: pointer; padding: 6px;
+      }
+    </style>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#041027" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Davis Carpet" />
+    <script>
+      // Installable app: a pass-through service worker (it caches nothing, so it can
+      // never serve stale code or data). Its presence is what lets the app be added
+      // to a home screen and opened full-screen.
+      if ("serviceWorker" in navigator) {
+        addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js").catch(function () {});
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+      /* ------------------------------------------------------------------
+         The signed-in user's menu (the popup on the email row):
+           * the links that used to sit in the sidebar
+           * Get the app  - the QR card for the download page
+           * Update the app - drop the saved copy and reload the latest build
+         The menu is rendered by the app, so the items are added when it opens.
+         ------------------------------------------------------------------ */
+      (function () {
+        var QR_URL = location.origin + "/app/download/";
+        var QR_SVG = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 165 165"  preserveAspectRatio="xMinYMin meet"><rect width="100%" height="100%" fill="white" cx="0" cy="0"/><path d="M0,0l5,0 0,5 -5,0 0,-5z M5,0l5,0 0,5 -5,0 0,-5z M10,0l5,0 0,5 -5,0 0,-5z M15,0l5,0 0,5 -5,0 0,-5z M20,0l5,0 0,5 -5,0 0,-5z M25,0l5,0 0,5 -5,0 0,-5z M30,0l5,0 0,5 -5,0 0,-5z M40,0l5,0 0,5 -5,0 0,-5z M45,0l5,0 0,5 -5,0 0,-5z M55,0l5,0 0,5 -5,0 0,-5z M65,0l5,0 0,5 -5,0 0,-5z M70,0l5,0 0,5 -5,0 0,-5z M80,0l5,0 0,5 -5,0 0,-5z M85,0l5,0 0,5 -5,0 0,-5z M90,0l5,0 0,5 -5,0 0,-5z M95,0l5,0 0,5 -5,0 0,-5z M100,0l5,0 0,5 -5,0 0,-5z M115,0l5,0 0,5 -5,0 0,-5z M120,0l5,0 0,5 -5,0 0,-5z M130,0l5,0 0,5 -5,0 0,-5z M135,0l5,0 0,5 -5,0 0,-5z M140,0l5,0 0,5 -5,0 0,-5z M145,0l5,0 0,5 -5,0 0,-5z M150,0l5,0 0,5 -5,0 0,-5z M155,0l5,0 0,5 -5,0 0,-5z M160,0l5,0 0,5 -5,0 0,-5z M0,5l5,0 0,5 -5,0 0,-5z M30,5l5,0 0,5 -5,0 0,-5z M40,5l5,0 0,5 -5,0 0,-5z M50,5l5,0 0,5 -5,0 0,-5z M65,5l5,0 0,5 -5,0 0,-5z M80,5l5,0 0,5 -5,0 0,-5z M90,5l5,0 0,5 -5,0 0,-5z M105,5l5,0 0,5 -5,0 0,-5z M110,5l5,0 0,5 -5,0 0,-5z M115,5l5,0 0,5 -5,0 0,-5z M120,5l5,0 0,5 -5,0 0,-5z M130,5l5,0 0,5 -5,0 0,-5z M160,5l5,0 0,5 -5,0 0,-5z M0,10l5,0 0,5 -5,0 0,-5z M10,10l5,0 0,5 -5,0 0,-5z M15,10l5,0 0,5 -5,0 0,-5z M20,10l5,0 0,5 -5,0 0,-5z M30,10l5,0 0,5 -5,0 0,-5z M85,10l5,0 0,5 -5,0 0,-5z M95,10l5,0 0,5 -5,0 0,-5z M110,10l5,0 0,5 -5,0 0,-5z M115,10l5,0 0,5 -5,0 0,-5z M130,10l5,0 0,5 -5,0 0,-5z M140,10l5,0 0,5 -5,0 0,-5z M145,10l5,0 0,5 -5,0 0,-5z M150,10l5,0 0,5 -5,0 0,-5z M160,10l5,0 0,5 -5,0 0,-5z M0,15l5,0 0,5 -5,0 0,-5z M10,15l5,0 0,5 -5,0 0,-5z M15,15l5,0 0,5 -5,0 0,-5z M20,15l5,0 0,5 -5,0 0,-5z M30,15l5,0 0,5 -5,0 0,-5z M40,15l5,0 0,5 -5,0 0,-5z M45,15l5,0 0,5 -5,0 0,-5z M55,15l5,0 0,5 -5,0 0,-5z M60,15l5,0 0,5 -5,0 0,-5z M70,15l5,0 0,5 -5,0 0,-5z M80,15l5,0 0,5 -5,0 0,-5z M100,15l5,0 0,5 -5,0 0,-5z M110,15l5,0 0,5 -5,0 0,-5z M120,15l5,0 0,5 -5,0 0,-5z M130,15l5,0 0,5 -5,0 0,-5z M140,15l5,0 0,5 -5,0 0,-5z M145,15l5,0 0,5 -5,0 0,-5z M150,15l5,0 0,5 -5,0 0,-5z M160,15l5,0 0,5 -5,0 0,-5z M0,20l5,0 0,5 -5,0 0,-5z M10,20l5,0 0,5 -5,0 0,-5z M15,20l5,0 0,5 -5,0 0,-5z M20,20l5,0 0,5 -5,0 0,-5z M30,20l5,0 0,5 -5,0 0,-5z M50,20l5,0 0,5 -5,0 0,-5z M55,20l5,0 0,5 -5,0 0,-5z M60,20l5,0 0,5 -5,0 0,-5z M70,20l5,0 0,5 -5,0 0,-5z M100,20l5,0 0,5 -5,0 0,-5z M105,20l5,0 0,5 -5,0 0,-5z M120,20l5,0 0,5 -5,0 0,-5z M130,20l5,0 0,5 -5,0 0,-5z M140,20l5,0 0,5 -5,0 0,-5z M145,20l5,0 0,5 -5,0 0,-5z M150,20l5,0 0,5 -5,0 0,-5z M160,20l5,0 0,5 -5,0 0,-5z M0,25l5,0 0,5 -5,0 0,-5z M30,25l5,0 0,5 -5,0 0,-5z M50,25l5,0 0,5 -5,0 0,-5z M60,25l5,0 0,5 -5,0 0,-5z M70,25l5,0 0,5 -5,0 0,-5z M85,25l5,0 0,5 -5,0 0,-5z M90,25l5,0 0,5 -5,0 0,-5z M95,25l5,0 0,5 -5,0 0,-5z M100,25l5,0 0,5 -5,0 0,-5z M120,25l5,0 0,5 -5,0 0,-5z M130,25l5,0 0,5 -5,0 0,-5z M160,25l5,0 0,5 -5,0 0,-5z M0,30l5,0 0,5 -5,0 0,-5z M5,30l5,0 0,5 -5,0 0,-5z M10,30l5,0 0,5 -5,0 0,-5z M15,30l5,0 0,5 -5,0 0,-5z M20,30l5,0 0,5 -5,0 0,-5z M25,30l5,0 0,5 -5,0 0,-5z M30,30l5,0 0,5 -5,0 0,-5z M40,30l5,0 0,5 -5,0 0,-5z M50,30l5,0 0,5 -5,0 0,-5z M60,30l5,0 0,5 -5,0 0,-5z M70,30l5,0 0,5 -5,0 0,-5z M80,30l5,0 0,5 -5,0 0,-5z M90,30l5,0 0,5 -5,0 0,-5z M100,30l5,0 0,5 -5,0 0,-5z M110,30l5,0 0,5 -5,0 0,-5z M120,30l5,0 0,5 -5,0 0,-5z M130,30l5,0 0,5 -5,0 0,-5z M135,30l5,0 0,5 -5,0 0,-5z M140,30l5,0 0,5 -5,0 0,-5z M145,30l5,0 0,5 -5,0 0,-5z M150,30l5,0 0,5 -5,0 0,-5z M155,30l5,0 0,5 -5,0 0,-5z M160,30l5,0 0,5 -5,0 0,-5z M40,35l5,0 0,5 -5,0 0,-5z M45,35l5,0 0,5 -5,0 0,-5z M50,35l5,0 0,5 -5,0 0,-5z M55,35l5,0 0,5 -5,0 0,-5z M60,35l5,0 0,5 -5,0 0,-5z M85,35l5,0 0,5 -5,0 0,-5z M100,35l5,0 0,5 -5,0 0,-5z M110,35l5,0 0,5 -5,0 0,-5z M120,35l5,0 0,5 -5,0 0,-5z M0,40l5,0 0,5 -5,0 0,-5z M10,40l5,0 0,5 -5,0 0,-5z M15,40l5,0 0,5 -5,0 0,-5z M25,40l5,0 0,5 -5,0 0,-5z M30,40l5,0 0,5 -5,0 0,-5z M35,40l5,0 0,5 -5,0 0,-5z M50,40l5,0 0,5 -5,0 0,-5z M55,40l5,0 0,5 -5,0 0,-5z M70,40l5,0 0,5 -5,0 0,-5z M80,40l5,0 0,5 -5,0 0,-5z M85,40l5,0 0,5 -5,0 0,-5z M90,40l5,0 0,5 -5,0 0,-5z M95,40l5,0 0,5 -5,0 0,-5z M105,40l5,0 0,5 -5,0 0,-5z M120,40l5,0 0,5 -5,0 0,-5z M130,40l5,0 0,5 -5,0 0,-5z M145,40l5,0 0,5 -5,0 0,-5z M155,40l5,0 0,5 -5,0 0,-5z M160,40l5,0 0,5 -5,0 0,-5z M5,45l5,0 0,5 -5,0 0,-5z M10,45l5,0 0,5 -5,0 0,-5z M45,45l5,0 0,5 -5,0 0,-5z M50,45l5,0 0,5 -5,0 0,-5z M60,45l5,0 0,5 -5,0 0,-5z M95,45l5,0 0,5 -5,0 0,-5z M100,45l5,0 0,5 -5,0 0,-5z M115,45l5,0 0,5 -5,0 0,-5z M130,45l5,0 0,5 -5,0 0,-5z M135,45l5,0 0,5 -5,0 0,-5z M145,45l5,0 0,5 -5,0 0,-5z M150,45l5,0 0,5 -5,0 0,-5z M160,45l5,0 0,5 -5,0 0,-5z M10,50l5,0 0,5 -5,0 0,-5z M15,50l5,0 0,5 -5,0 0,-5z M20,50l5,0 0,5 -5,0 0,-5z M25,50l5,0 0,5 -5,0 0,-5z M30,50l5,0 0,5 -5,0 0,-5z M35,50l5,0 0,5 -5,0 0,-5z M40,50l5,0 0,5 -5,0 0,-5z M45,50l5,0 0,5 -5,0 0,-5z M50,50l5,0 0,5 -5,0 0,-5z M55,50l5,0 0,5 -5,0 0,-5z M70,50l5,0 0,5 -5,0 0,-5z M80,50l5,0 0,5 -5,0 0,-5z M85,50l5,0 0,5 -5,0 0,-5z M100,50l5,0 0,5 -5,0 0,-5z M110,50l5,0 0,5 -5,0 0,-5z M115,50l5,0 0,5 -5,0 0,-5z M120,50l5,0 0,5 -5,0 0,-5z M130,50l5,0 0,5 -5,0 0,-5z M135,50l5,0 0,5 -5,0 0,-5z M140,50l5,0 0,5 -5,0 0,-5z M145,50l5,0 0,5 -5,0 0,-5z M155,50l5,0 0,5 -5,0 0,-5z M160,50l5,0 0,5 -5,0 0,-5z M0,55l5,0 0,5 -5,0 0,-5z M25,55l5,0 0,5 -5,0 0,-5z M35,55l5,0 0,5 -5,0 0,-5z M65,55l5,0 0,5 -5,0 0,-5z M70,55l5,0 0,5 -5,0 0,-5z M75,55l5,0 0,5 -5,0 0,-5z M80,55l5,0 0,5 -5,0 0,-5z M90,55l5,0 0,5 -5,0 0,-5z M95,55l5,0 0,5 -5,0 0,-5z M100,55l5,0 0,5 -5,0 0,-5z M110,55l5,0 0,5 -5,0 0,-5z M125,55l5,0 0,5 -5,0 0,-5z M135,55l5,0 0,5 -5,0 0,-5z M145,55l5,0 0,5 -5,0 0,-5z M155,55l5,0 0,5 -5,0 0,-5z M160,55l5,0 0,5 -5,0 0,-5z M5,60l5,0 0,5 -5,0 0,-5z M10,60l5,0 0,5 -5,0 0,-5z M20,60l5,0 0,5 -5,0 0,-5z M25,60l5,0 0,5 -5,0 0,-5z M30,60l5,0 0,5 -5,0 0,-5z M50,60l5,0 0,5 -5,0 0,-5z M75,60l5,0 0,5 -5,0 0,-5z M90,60l5,0 0,5 -5,0 0,-5z M110,60l5,0 0,5 -5,0 0,-5z M115,60l5,0 0,5 -5,0 0,-5z M125,60l5,0 0,5 -5,0 0,-5z M140,60l5,0 0,5 -5,0 0,-5z M145,60l5,0 0,5 -5,0 0,-5z M155,60l5,0 0,5 -5,0 0,-5z M160,60l5,0 0,5 -5,0 0,-5z M0,65l5,0 0,5 -5,0 0,-5z M35,65l5,0 0,5 -5,0 0,-5z M40,65l5,0 0,5 -5,0 0,-5z M45,65l5,0 0,5 -5,0 0,-5z M55,65l5,0 0,5 -5,0 0,-5z M60,65l5,0 0,5 -5,0 0,-5z M80,65l5,0 0,5 -5,0 0,-5z M85,65l5,0 0,5 -5,0 0,-5z M90,65l5,0 0,5 -5,0 0,-5z M120,65l5,0 0,5 -5,0 0,-5z M125,65l5,0 0,5 -5,0 0,-5z M135,65l5,0 0,5 -5,0 0,-5z M150,65l5,0 0,5 -5,0 0,-5z M155,65l5,0 0,5 -5,0 0,-5z M10,70l5,0 0,5 -5,0 0,-5z M15,70l5,0 0,5 -5,0 0,-5z M30,70l5,0 0,5 -5,0 0,-5z M40,70l5,0 0,5 -5,0 0,-5z M45,70l5,0 0,5 -5,0 0,-5z M50,70l5,0 0,5 -5,0 0,-5z M75,70l5,0 0,5 -5,0 0,-5z M80,70l5,0 0,5 -5,0 0,-5z M90,70l5,0 0,5 -5,0 0,-5z M110,70l5,0 0,5 -5,0 0,-5z M120,70l5,0 0,5 -5,0 0,-5z M130,70l5,0 0,5 -5,0 0,-5z M135,70l5,0 0,5 -5,0 0,-5z M140,70l5,0 0,5 -5,0 0,-5z M145,70l5,0 0,5 -5,0 0,-5z M150,70l5,0 0,5 -5,0 0,-5z M15,75l5,0 0,5 -5,0 0,-5z M20,75l5,0 0,5 -5,0 0,-5z M25,75l5,0 0,5 -5,0 0,-5z M40,75l5,0 0,5 -5,0 0,-5z M55,75l5,0 0,5 -5,0 0,-5z M65,75l5,0 0,5 -5,0 0,-5z M70,75l5,0 0,5 -5,0 0,-5z M80,75l5,0 0,5 -5,0 0,-5z M90,75l5,0 0,5 -5,0 0,-5z M95,75l5,0 0,5 -5,0 0,-5z M100,75l5,0 0,5 -5,0 0,-5z M105,75l5,0 0,5 -5,0 0,-5z M110,75l5,0 0,5 -5,0 0,-5z M115,75l5,0 0,5 -5,0 0,-5z M125,75l5,0 0,5 -5,0 0,-5z M130,75l5,0 0,5 -5,0 0,-5z M135,75l5,0 0,5 -5,0 0,-5z M145,75l5,0 0,5 -5,0 0,-5z M150,75l5,0 0,5 -5,0 0,-5z M25,80l5,0 0,5 -5,0 0,-5z M30,80l5,0 0,5 -5,0 0,-5z M35,80l5,0 0,5 -5,0 0,-5z M40,80l5,0 0,5 -5,0 0,-5z M45,80l5,0 0,5 -5,0 0,-5z M75,80l5,0 0,5 -5,0 0,-5z M80,80l5,0 0,5 -5,0 0,-5z M95,80l5,0 0,5 -5,0 0,-5z M105,80l5,0 0,5 -5,0 0,-5z M110,80l5,0 0,5 -5,0 0,-5z M125,80l5,0 0,5 -5,0 0,-5z M130,80l5,0 0,5 -5,0 0,-5z M140,80l5,0 0,5 -5,0 0,-5z M150,80l5,0 0,5 -5,0 0,-5z M0,85l5,0 0,5 -5,0 0,-5z M5,85l5,0 0,5 -5,0 0,-5z M10,85l5,0 0,5 -5,0 0,-5z M20,85l5,0 0,5 -5,0 0,-5z M40,85l5,0 0,5 -5,0 0,-5z M45,85l5,0 0,5 -5,0 0,-5z M70,85l5,0 0,5 -5,0 0,-5z M75,85l5,0 0,5 -5,0 0,-5z M85,85l5,0 0,5 -5,0 0,-5z M100,85l5,0 0,5 -5,0 0,-5z M105,85l5,0 0,5 -5,0 0,-5z M115,85l5,0 0,5 -5,0 0,-5z M120,85l5,0 0,5 -5,0 0,-5z M125,85l5,0 0,5 -5,0 0,-5z M130,85l5,0 0,5 -5,0 0,-5z M140,85l5,0 0,5 -5,0 0,-5z M145,85l5,0 0,5 -5,0 0,-5z M155,85l5,0 0,5 -5,0 0,-5z M160,85l5,0 0,5 -5,0 0,-5z M0,90l5,0 0,5 -5,0 0,-5z M5,90l5,0 0,5 -5,0 0,-5z M20,90l5,0 0,5 -5,0 0,-5z M30,90l5,0 0,5 -5,0 0,-5z M35,90l5,0 0,5 -5,0 0,-5z M45,90l5,0 0,5 -5,0 0,-5z M75,90l5,0 0,5 -5,0 0,-5z M80,90l5,0 0,5 -5,0 0,-5z M85,90l5,0 0,5 -5,0 0,-5z M100,90l5,0 0,5 -5,0 0,-5z M110,90l5,0 0,5 -5,0 0,-5z M120,90l5,0 0,5 -5,0 0,-5z M135,90l5,0 0,5 -5,0 0,-5z M140,90l5,0 0,5 -5,0 0,-5z M150,90l5,0 0,5 -5,0 0,-5z M5,95l5,0 0,5 -5,0 0,-5z M15,95l5,0 0,5 -5,0 0,-5z M25,95l5,0 0,5 -5,0 0,-5z M35,95l5,0 0,5 -5,0 0,-5z M40,95l5,0 0,5 -5,0 0,-5z M50,95l5,0 0,5 -5,0 0,-5z M55,95l5,0 0,5 -5,0 0,-5z M60,95l5,0 0,5 -5,0 0,-5z M65,95l5,0 0,5 -5,0 0,-5z M70,95l5,0 0,5 -5,0 0,-5z M95,95l5,0 0,5 -5,0 0,-5z M100,95l5,0 0,5 -5,0 0,-5z M110,95l5,0 0,5 -5,0 0,-5z M120,95l5,0 0,5 -5,0 0,-5z M130,95l5,0 0,5 -5,0 0,-5z M140,95l5,0 0,5 -5,0 0,-5z M5,100l5,0 0,5 -5,0 0,-5z M15,100l5,0 0,5 -5,0 0,-5z M20,100l5,0 0,5 -5,0 0,-5z M30,100l5,0 0,5 -5,0 0,-5z M35,100l5,0 0,5 -5,0 0,-5z M45,100l5,0 0,5 -5,0 0,-5z M50,100l5,0 0,5 -5,0 0,-5z M55,100l5,0 0,5 -5,0 0,-5z M65,100l5,0 0,5 -5,0 0,-5z M75,100l5,0 0,5 -5,0 0,-5z M90,100l5,0 0,5 -5,0 0,-5z M95,100l5,0 0,5 -5,0 0,-5z M105,100l5,0 0,5 -5,0 0,-5z M125,100l5,0 0,5 -5,0 0,-5z M145,100l5,0 0,5 -5,0 0,-5z M150,100l5,0 0,5 -5,0 0,-5z M155,100l5,0 0,5 -5,0 0,-5z M0,105l5,0 0,5 -5,0 0,-5z M15,105l5,0 0,5 -5,0 0,-5z M20,105l5,0 0,5 -5,0 0,-5z M45,105l5,0 0,5 -5,0 0,-5z M55,105l5,0 0,5 -5,0 0,-5z M75,105l5,0 0,5 -5,0 0,-5z M85,105l5,0 0,5 -5,0 0,-5z M90,105l5,0 0,5 -5,0 0,-5z M105,105l5,0 0,5 -5,0 0,-5z M115,105l5,0 0,5 -5,0 0,-5z M130,105l5,0 0,5 -5,0 0,-5z M150,105l5,0 0,5 -5,0 0,-5z M160,105l5,0 0,5 -5,0 0,-5z M15,110l5,0 0,5 -5,0 0,-5z M20,110l5,0 0,5 -5,0 0,-5z M30,110l5,0 0,5 -5,0 0,-5z M35,110l5,0 0,5 -5,0 0,-5z M40,110l5,0 0,5 -5,0 0,-5z M55,110l5,0 0,5 -5,0 0,-5z M65,110l5,0 0,5 -5,0 0,-5z M80,110l5,0 0,5 -5,0 0,-5z M90,110l5,0 0,5 -5,0 0,-5z M105,110l5,0 0,5 -5,0 0,-5z M115,110l5,0 0,5 -5,0 0,-5z M125,110l5,0 0,5 -5,0 0,-5z M130,110l5,0 0,5 -5,0 0,-5z M135,110l5,0 0,5 -5,0 0,-5z M140,110l5,0 0,5 -5,0 0,-5z M145,110l5,0 0,5 -5,0 0,-5z M150,110l5,0 0,5 -5,0 0,-5z M155,110l5,0 0,5 -5,0 0,-5z M160,110l5,0 0,5 -5,0 0,-5z M5,115l5,0 0,5 -5,0 0,-5z M25,115l5,0 0,5 -5,0 0,-5z M45,115l5,0 0,5 -5,0 0,-5z M50,115l5,0 0,5 -5,0 0,-5z M55,115l5,0 0,5 -5,0 0,-5z M60,115l5,0 0,5 -5,0 0,-5z M65,115l5,0 0,5 -5,0 0,-5z M70,115l5,0 0,5 -5,0 0,-5z M80,115l5,0 0,5 -5,0 0,-5z M100,115l5,0 0,5 -5,0 0,-5z M120,115l5,0 0,5 -5,0 0,-5z M125,115l5,0 0,5 -5,0 0,-5z M135,115l5,0 0,5 -5,0 0,-5z M145,115l5,0 0,5 -5,0 0,-5z M155,115l5,0 0,5 -5,0 0,-5z M160,115l5,0 0,5 -5,0 0,-5z M0,120l5,0 0,5 -5,0 0,-5z M10,120l5,0 0,5 -5,0 0,-5z M20,120l5,0 0,5 -5,0 0,-5z M25,120l5,0 0,5 -5,0 0,-5z M30,120l5,0 0,5 -5,0 0,-5z M55,120l5,0 0,5 -5,0 0,-5z M60,120l5,0 0,5 -5,0 0,-5z M65,120l5,0 0,5 -5,0 0,-5z M75,120l5,0 0,5 -5,0 0,-5z M80,120l5,0 0,5 -5,0 0,-5z M85,120l5,0 0,5 -5,0 0,-5z M95,120l5,0 0,5 -5,0 0,-5z M100,120l5,0 0,5 -5,0 0,-5z M110,120l5,0 0,5 -5,0 0,-5z M120,120l5,0 0,5 -5,0 0,-5z M125,120l5,0 0,5 -5,0 0,-5z M130,120l5,0 0,5 -5,0 0,-5z M135,120l5,0 0,5 -5,0 0,-5z M140,120l5,0 0,5 -5,0 0,-5z M40,125l5,0 0,5 -5,0 0,-5z M45,125l5,0 0,5 -5,0 0,-5z M50,125l5,0 0,5 -5,0 0,-5z M55,125l5,0 0,5 -5,0 0,-5z M75,125l5,0 0,5 -5,0 0,-5z M80,125l5,0 0,5 -5,0 0,-5z M85,125l5,0 0,5 -5,0 0,-5z M95,125l5,0 0,5 -5,0 0,-5z M110,125l5,0 0,5 -5,0 0,-5z M120,125l5,0 0,5 -5,0 0,-5z M140,125l5,0 0,5 -5,0 0,-5z M145,125l5,0 0,5 -5,0 0,-5z M0,130l5,0 0,5 -5,0 0,-5z M5,130l5,0 0,5 -5,0 0,-5z M10,130l5,0 0,5 -5,0 0,-5z M15,130l5,0 0,5 -5,0 0,-5z M20,130l5,0 0,5 -5,0 0,-5z M25,130l5,0 0,5 -5,0 0,-5z M30,130l5,0 0,5 -5,0 0,-5z M40,130l5,0 0,5 -5,0 0,-5z M50,130l5,0 0,5 -5,0 0,-5z M70,130l5,0 0,5 -5,0 0,-5z M95,130l5,0 0,5 -5,0 0,-5z M100,130l5,0 0,5 -5,0 0,-5z M110,130l5,0 0,5 -5,0 0,-5z M115,130l5,0 0,5 -5,0 0,-5z M120,130l5,0 0,5 -5,0 0,-5z M130,130l5,0 0,5 -5,0 0,-5z M140,130l5,0 0,5 -5,0 0,-5z M0,135l5,0 0,5 -5,0 0,-5z M30,135l5,0 0,5 -5,0 0,-5z M40,135l5,0 0,5 -5,0 0,-5z M45,135l5,0 0,5 -5,0 0,-5z M50,135l5,0 0,5 -5,0 0,-5z M60,135l5,0 0,5 -5,0 0,-5z M75,135l5,0 0,5 -5,0 0,-5z M105,135l5,0 0,5 -5,0 0,-5z M110,135l5,0 0,5 -5,0 0,-5z M115,135l5,0 0,5 -5,0 0,-5z M120,135l5,0 0,5 -5,0 0,-5z M140,135l5,0 0,5 -5,0 0,-5z M145,135l5,0 0,5 -5,0 0,-5z M150,135l5,0 0,5 -5,0 0,-5z M155,135l5,0 0,5 -5,0 0,-5z M0,140l5,0 0,5 -5,0 0,-5z M10,140l5,0 0,5 -5,0 0,-5z M15,140l5,0 0,5 -5,0 0,-5z M20,140l5,0 0,5 -5,0 0,-5z M30,140l5,0 0,5 -5,0 0,-5z M50,140l5,0 0,5 -5,0 0,-5z M70,140l5,0 0,5 -5,0 0,-5z M85,140l5,0 0,5 -5,0 0,-5z M95,140l5,0 0,5 -5,0 0,-5z M100,140l5,0 0,5 -5,0 0,-5z M105,140l5,0 0,5 -5,0 0,-5z M110,140l5,0 0,5 -5,0 0,-5z M115,140l5,0 0,5 -5,0 0,-5z M120,140l5,0 0,5 -5,0 0,-5z M125,140l5,0 0,5 -5,0 0,-5z M130,140l5,0 0,5 -5,0 0,-5z M135,140l5,0 0,5 -5,0 0,-5z M140,140l5,0 0,5 -5,0 0,-5z M150,140l5,0 0,5 -5,0 0,-5z M155,140l5,0 0,5 -5,0 0,-5z M160,140l5,0 0,5 -5,0 0,-5z M0,145l5,0 0,5 -5,0 0,-5z M10,145l5,0 0,5 -5,0 0,-5z M15,145l5,0 0,5 -5,0 0,-5z M20,145l5,0 0,5 -5,0 0,-5z M30,145l5,0 0,5 -5,0 0,-5z M40,145l5,0 0,5 -5,0 0,-5z M85,145l5,0 0,5 -5,0 0,-5z M90,145l5,0 0,5 -5,0 0,-5z M110,145l5,0 0,5 -5,0 0,-5z M115,145l5,0 0,5 -5,0 0,-5z M135,145l5,0 0,5 -5,0 0,-5z M145,145l5,0 0,5 -5,0 0,-5z M160,145l5,0 0,5 -5,0 0,-5z M0,150l5,0 0,5 -5,0 0,-5z M10,150l5,0 0,5 -5,0 0,-5z M15,150l5,0 0,5 -5,0 0,-5z M20,150l5,0 0,5 -5,0 0,-5z M30,150l5,0 0,5 -5,0 0,-5z M40,150l5,0 0,5 -5,0 0,-5z M45,150l5,0 0,5 -5,0 0,-5z M50,150l5,0 0,5 -5,0 0,-5z M55,150l5,0 0,5 -5,0 0,-5z M60,150l5,0 0,5 -5,0 0,-5z M85,150l5,0 0,5 -5,0 0,-5z M90,150l5,0 0,5 -5,0 0,-5z M120,150l5,0 0,5 -5,0 0,-5z M130,150l5,0 0,5 -5,0 0,-5z M135,150l5,0 0,5 -5,0 0,-5z M145,150l5,0 0,5 -5,0 0,-5z M0,155l5,0 0,5 -5,0 0,-5z M30,155l5,0 0,5 -5,0 0,-5z M70,155l5,0 0,5 -5,0 0,-5z M75,155l5,0 0,5 -5,0 0,-5z M80,155l5,0 0,5 -5,0 0,-5z M85,155l5,0 0,5 -5,0 0,-5z M110,155l5,0 0,5 -5,0 0,-5z M115,155l5,0 0,5 -5,0 0,-5z M120,155l5,0 0,5 -5,0 0,-5z M125,155l5,0 0,5 -5,0 0,-5z M135,155l5,0 0,5 -5,0 0,-5z M140,155l5,0 0,5 -5,0 0,-5z M145,155l5,0 0,5 -5,0 0,-5z M160,155l5,0 0,5 -5,0 0,-5z M0,160l5,0 0,5 -5,0 0,-5z M5,160l5,0 0,5 -5,0 0,-5z M10,160l5,0 0,5 -5,0 0,-5z M15,160l5,0 0,5 -5,0 0,-5z M20,160l5,0 0,5 -5,0 0,-5z M25,160l5,0 0,5 -5,0 0,-5z M30,160l5,0 0,5 -5,0 0,-5z M40,160l5,0 0,5 -5,0 0,-5z M45,160l5,0 0,5 -5,0 0,-5z M50,160l5,0 0,5 -5,0 0,-5z M60,160l5,0 0,5 -5,0 0,-5z M75,160l5,0 0,5 -5,0 0,-5z M80,160l5,0 0,5 -5,0 0,-5z M85,160l5,0 0,5 -5,0 0,-5z M90,160l5,0 0,5 -5,0 0,-5z M95,160l5,0 0,5 -5,0 0,-5z M105,160l5,0 0,5 -5,0 0,-5z M115,160l5,0 0,5 -5,0 0,-5z M130,160l5,0 0,5 -5,0 0,-5z M140,160l5,0 0,5 -5,0 0,-5z M150,160l5,0 0,5 -5,0 0,-5z " stroke="transparent" fill="black"/></svg>';
+
+        function buildModal() {
+          if (document.getElementById("ob-qr")) return;
+          var dlg = document.createElement("dialog");
+          dlg.id = "ob-qr";
+          dlg.className = "ob-qr";
+          dlg.setAttribute("aria-labelledby", "ob-qr-title");
+          dlg.innerHTML =
+            '<button class="ob-qr-close" type="button" aria-label="Close">&#x2715;</button>' +
+            '<h2 id="ob-qr-title">Get the mobile app</h2>' +
+            '<p>Scan the QR code with your phone camera, or copy the link to open the download page.</p>' +
+            '<div class="ob-qr-box" role="img" aria-label="QR code for the download page">' + QR_SVG + '</div>' +
+            '<p class="ob-qr-url">' + QR_URL + '</p>' +
+            '<div class="ob-qr-actions">' +
+              '<button class="ob-qr-btn primary" type="button" id="ob-qr-copy">Copy link</button>' +
+              '<a class="ob-qr-btn ghost" href="' + QR_URL + '" target="_blank" rel="noopener">Open download page</a>' +
+            '</div>';
+          document.body.appendChild(dlg);
+          dlg.querySelector(".ob-qr-close").addEventListener("click", function () { dlg.close(); });
+          dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+          var copy = dlg.querySelector("#ob-qr-copy");
+          copy.addEventListener("click", function () {
+            var done = function () {
+              copy.textContent = "Copied";
+              setTimeout(function () { copy.textContent = "Copy link"; }, 1500);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(QR_URL).then(done, done);
+            } else {
+              var t = document.createElement("textarea");
+              t.value = QR_URL; t.style.position = "fixed"; t.style.opacity = "0";
+              document.body.appendChild(t); t.select();
+              try { document.execCommand("copy"); } catch (e) {}
+              document.body.removeChild(t); done();
+            }
+          });
+        }
+
+        function openQR() {
+          buildModal();
+          var dlg = document.getElementById("ob-qr");
+          if (!dlg) return;
+          try {
+            if (typeof dlg.showModal === "function") { if (!dlg.open) dlg.showModal(); }
+            else dlg.setAttribute("open", "");
+          } catch (e) { dlg.setAttribute("open", ""); }
+        }
+
+        function closeUserMenu() {
+          var trigger = document.querySelector('#root .bg-sidebar [data-slot="dropdown-menu-trigger"]');
+          if (trigger) trigger.click();
+        }
+
+        /* Drop the cached copy of this page and reload the newest build. */
+        function updateApp() {
+          var go = function () {
+            location.replace(location.pathname + "?fresh=" + Date.now() + location.hash);
+          };
+          var jobs = [];
+          try {
+            if (window.caches && caches.keys) {
+              jobs.push(caches.keys().then(function (keys) {
+                return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+              }));
+            }
+          } catch (e) { /* no CacheStorage */ }
+          try {
+            if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+              jobs.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+                return Promise.all(regs.map(function (r) { return r.unregister(); }));
+              }));
+            }
+          } catch (e) { /* no service worker */ }
+          Promise.all(jobs).then(go, go);
+        }
+
+        var USER_LINKS = [
+          { label: "Obsidian Vault", href: "https://vault.jays-web.org/davis/" },
+          { label: "Obsidian Graph", href: "https://vault.jays-web.org/davis/graph.html" },
+          { label: "Skills", href: "/skills" },
+          { label: "Agents", href: "/agents" },
+          { label: "OpenRouter", href: "https://openrouter.ai/", blank: true },
+          { label: "Help", href: "/help/" },
+          { label: "Get the app", qr: true },
+          { label: "Update the app", update: true }
+        ];
+
+        function extendUserMenu() {
+          var content = document.querySelector('[data-slot="dropdown-menu-content"]');
+          if (!content || content.getAttribute("data-ob-links")) return;
+          var model = content.querySelector('a[data-slot="dropdown-menu-item"]');
+          if (!model) return;
+          content.setAttribute("data-ob-links", "1");
+          var added = [];
+          USER_LINKS.forEach(function (link) {
+            var a = model.cloneNode(true);
+            a.removeAttribute("id");
+            a.textContent = "";
+            var span = document.createElement("span");
+            span.textContent = link.label;
+            a.appendChild(span);
+            if (link.qr) {
+              a.setAttribute("href", "#");
+              a.addEventListener("click", function (e) {
+                e.preventDefault();
+                openQR();
+                closeUserMenu();
+              });
+            } else if (link.update) {
+              a.setAttribute("href", "#");
+              a.addEventListener("click", function (e) {
+                e.preventDefault();
+                updateApp();
+              });
+            } else {
+              a.setAttribute("href", link.href);
+              if (link.blank) {
+                a.setAttribute("target", "_blank");
+                a.setAttribute("rel", "noopener");
+              }
+            }
+            added.push(a);
+          });
+          var sep = content.querySelector('[data-slot="dropdown-menu-separator"]');
+          if (sep) {
+            added.push(sep.cloneNode(true));
+          } else {
+            var divider = document.createElement("div");
+            divider.setAttribute("data-slot", "dropdown-menu-separator");
+            divider.style.cssText = "height:1px;margin:6px 4px;background:rgba(255,255,255,0.14);";
+            added.push(divider);
+          }
+          var first = content.firstElementChild;
+          added.forEach(function (el) { content.insertBefore(el, first); });
+        }
+
+        var mo = new MutationObserver(function () { extendUserMenu(); });
+        mo.observe(document.documentElement, { childList: true, subtree: true });
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", function () { extendUserMenu(); });
+        } else { extendUserMenu(); }
+      })();
+    </script>
+  </body>
+</html>
