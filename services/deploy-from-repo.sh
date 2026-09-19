@@ -27,7 +27,7 @@ LOG="$HOME/.local/state/openbot-app-deploy.log"
 mkdir -p "$(dirname "$LOG")"
 log() { echo "$(date -Is) $*" >> "$LOG"; }
 
-cd "$REPO" || { log "repository missing"; exit 0; }
+cd "$REPO" || { log "repository missing"; echo "RESULT=failed repo-missing"; exit 1; }
 
 # A local commit is a publish too, not only a pulled one: --publish-app
 # forces the app step after committing here on the machine.
@@ -37,7 +37,8 @@ force_app=0
 before="$(git rev-parse HEAD)"
 if ! git fetch --quiet origin main || ! git merge --quiet --ff-only FETCH_HEAD; then
   log "pull failed (offline or diverged) — nothing deployed"
-  exit 0
+  echo "RESULT=failed pull"
+  exit 1
 fi
 after="$(git rev-parse HEAD)"
 
@@ -92,4 +93,9 @@ if [ -d "$DEPLOY/branded" ]; then
   done
 fi
 
-[ "$did_something" = "1" ] || log "pulled ${after:0:7} — nothing to publish"
+if [ "$did_something" = "1" ]; then
+  echo "RESULT=changed"
+else
+  log "pulled ${after:0:7} — nothing to publish"
+  echo "RESULT=unchanged"
+fi
