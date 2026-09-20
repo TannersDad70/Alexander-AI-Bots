@@ -38,7 +38,7 @@ PAGE = """<!doctype html>
     margin: 0; background: #041027; color: #eaf2ff;
     font: 17px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
   }}
-  main {{ max-width: 900px; margin: 0 auto; padding: 32px 22px 80px; }}
+  main {{ max-width: none; margin: 0; padding: 28px clamp(16px, 3vw, 44px) 80px; }}
   h1 {{ font-size: 28px; margin: 0 0 6px; }}
   .sub {{ color: #9fb6d9; margin-bottom: 22px; }}
   .back {{
@@ -260,10 +260,12 @@ def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str,
         )
 
     toc = "<ul>" + "".join(toc_items) + "</ul>" if toc_items else '<p class="empty">No notes yet.</p>'
+    # Back goes to the phone app's chat, which is where the vault is read from.
+    app_chat_url = app_url.rstrip("/") + "/app/#/chat"
     page = PAGE.format(
         title=html.escape(title),
         app_name=html.escape(app_name),
-        back_url=app_url,
+        back_url=app_chat_url,
         count=len(notes),
         toc=toc,
         notes="".join(bodies) or '<p class="empty">The bot has not written any notes yet.</p>',
@@ -283,7 +285,7 @@ def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str,
     graph_page = (tpl
                   .replace("__TITLE__", html.escape(title))
                   .replace("__NAME__", html.escape(app_name))
-                  .replace("__APP_URL__", app_url)
+                  .replace("__APP_URL__", app_chat_url)
                   .replace("__VAULT_URL__", "./")
                   .replace("__GRAPH_JSON__", json.dumps(graph)))
     with open(os.path.join(out_dir, "graph.html"), "w", encoding="utf-8") as fh:
