@@ -62,7 +62,8 @@
 			# /app/; every path that is not a named surface (the API, the help,
 			# the key form) points at it instead of the desktop shell, so the
 			# desktop UI is no longer the landing page.
-			handle_path /api/* {
+			# `handle`, not `handle_path`: /api must reach the engine unstripped.
+			handle /api/* {
 				reverse_proxy 127.0.0.1:3001
 			}
 			handle {
