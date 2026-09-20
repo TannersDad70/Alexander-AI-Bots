@@ -395,27 +395,68 @@ function autosize(ta) {
 function platformMode() {
   return !!(settings.apiBase || CFG.apiBase) || location.pathname.indexOf('/app') === 0;
 }
-var platformBotId = null;
-var platformThreadId = null;
+/* The chat is a window onto the main app's conversations: the channels it
+ * lists are the same ones the deployment's own app shows, and messages land
+ * in the same threads. */
+var platformChannel = null;
+var platformMessages = [];
 
-function ensureThread() {
-  if (platformThreadId) return Promise.resolve(platformThreadId);
-  return apiPost('/api/threads/mint', {}).then(function (d) {
-    platformThreadId = d.threadId || d.id || null;
-    return platformThreadId;
+/* Report a message to the channel, so the main app's roster shows it too. */
+function reportActivity(channelId, message, agentId) {
+  return apiPost('/api/channels/' + encodeURIComponent(channelId) + '/activity', {
+    text: message, agentId: agentId || null, at: new Date().toISOString()
+  }).catch(function () {});
+}
+
+/* The text of one thread message; content is a string or a list of parts. */
+function messageText(m) {
+  var c = m && m.content;
+  if (typeof c === 'string') return c;
+  if (Array.isArray(c)) {
+    var out = '';
+    for (var i = 0; i < c.length; i++) {
+      if (c[i] && typeof c[i].text === 'string') out += c[i].text;
+    }
+    return out.trim();
+  }
+  return '';
+}
+
+/* Replace the bubbles with the conversation's messages. */
+function renderPlatformMessages(container, msgs) {
+  var old = container.querySelectorAll('.bubble');
+  for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+  msgs.forEach(function (m) {
+    if (m.role !== 'user' && m.role !== 'assistant') return;
+    var t = messageText(m);
+    if (!t) return;
+    container.appendChild(bubble(m.role, t));
   });
 }
 
+/* Load this conversation's history from the deployment. */
+function loadPlatformMessages(container) {
+  if (!container) return;
+  if (!platformChannel || !platformChannel.threadId) { renderPlatformMessages(container, []); return; }
+  api('/api/copilotkit/threads/' + encodeURIComponent(platformChannel.threadId) + '/messages')
+    .then(function (d) {
+      platformMessages = (d && (Array.isArray(d) ? d : d.messages)) || [];
+      renderPlatformMessages(container, platformMessages);
+      scrollChat(container);
+    })
+    .catch(function () { renderPlatformMessages(container, []); });
+}
+
 function doSendPlatform(userText, msgs, done) {
-  var history = getHistory();
-  history.push({ role: 'user', content: userText });
-  setHistory(history);
+  var channel = platformChannel;
+  var agentId = (channel && channel.agentIds && channel.agentIds[0]) || 'general-assistant';
 
   msgs.appendChild(bubble('user', userText));
   var ab = bubble('assistant', '');
   addTypingDots(ab);
   msgs.appendChild(ab);
   scrollChat(msgs);
+  if (channel) reportActivity(channel.id, userText, null);
 
   var full = '';
   var socket = null;
@@ -428,9 +469,7 @@ function doSendPlatform(userText, msgs, done) {
     if (ok) {
       clearTypingDots(ab);
       setBubbleText(ab, full || '(the bot said nothing)');
-      var h = getHistory();
-      h.push({ role: 'assistant', content: full });
-      setHistory(h);
+      if (channel) reportActivity(channel.id, full || '(the bot said nothing)', agentId);
       scrollChat(msgs);
     } else {
       clearTypingDots(ab);
@@ -442,23 +481,19 @@ function doSendPlatform(userText, msgs, done) {
     done();
   }
 
-  var botId = platformBotId || 'general-assistant';
-  ensureThread().then(function (tid) {
-    var messages = history.slice(-MAX_HISTORY).map(function (m, i) {
-      return { id: 'm' + i, role: m.role, content: m.content };
-    });
-    var runId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
-    return fetch('/api/copilotkit/agent/' + encodeURIComponent(botId) + '/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        threadId: tid, runId: runId, state: {},
-        messages: messages, tools: [], context: [], forwardedProps: {}
-      })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('the deployment answered ' + r.status);
-      return r.json();
-    });
+  if (!channel || !channel.threadId) { finish(false, 'there is no conversation selected'); return; }
+  var runId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+  fetch('/api/copilotkit/agent/' + encodeURIComponent(agentId) + '/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      threadId: channel.threadId, runId: runId, state: {},
+      messages: [{ id: runId, role: 'user', content: userText }],
+      tools: [], context: [], forwardedProps: {}
+    })
+  }).then(function (r) {
+    if (!r.ok) throw new Error('the deployment answered ' + r.status);
+    return r.json();
   }).then(function (run) {
     var realtime = (run && run.realtime) || {};
     if (!run.joinToken || !realtime.clientUrl || !realtime.topic) {
@@ -503,16 +538,34 @@ function renderChat() {
   modelChip.appendChild(mb);
   top.appendChild(modelChip);
 
-  var keyChip = el('span', 'chip key-chip ' + (settings.openrouterKey ? 'ok' : 'warn'));
-  keyChip.appendChild(el('span', 'dot'));
-  keyChip.appendChild(text(settings.openrouterKey ? 'API key set' : 'no API key'));
-  top.appendChild(keyChip);
+  if (platformMode()) {
+    api('/info').then(function (d) {
+      if (d && d.model) { mb.textContent = d.model; mb.title = d.model; }
+    }).catch(function () {});
+  }
+
+  if (!platformMode()) {
+    var keyChip = el('span', 'chip key-chip ' + (settings.openrouterKey ? 'ok' : 'warn'));
+    keyChip.appendChild(el('span', 'dot'));
+    keyChip.appendChild(text(settings.openrouterKey ? 'API key set' : 'no API key'));
+    top.appendChild(keyChip);
+  }
 
   top.appendChild(el('span', 'spacer'));
   var newBtn = el('button', 'btn btn-small btn-ghost');
   newBtn.type = 'button';
   newBtn.textContent = 'New chat';
   newBtn.addEventListener('click', function () {
+    if (platformMode()) {
+      var agentIds = (platformChannel && platformChannel.agentIds) || ['general-assistant'];
+      apiPost('/api/channels', { agentIds: agentIds }).then(function (d) {
+        if (!d || !d.channel) throw new Error('the deployment did not return the conversation');
+        platformChannel = d.channel;
+        renderChat();
+        toast('New conversation started');
+      }).catch(function (e) { toast('Could not start a conversation: ' + e.message, 'error'); });
+      return;
+    }
     setHistory([]);
     renderChat();
     toast('Conversation cleared');
@@ -520,26 +573,27 @@ function renderChat() {
   top.appendChild(newBtn);
   wrap.appendChild(top);
 
-  /* platform mode: pick which bot to talk to */
+  /* platform mode: pick which conversation (channel) to talk to */
   if (platformMode()) {
     var picker = el('div', 'bot-picker');
     wrap.appendChild(picker);
-    api('/api/agents').then(function (d) {
-      var bots = (d && d.agents) || [];
-      if (!bots.length) return;
-      if (!platformBotId) platformBotId = bots[0].id;
-      bots.forEach(function (b) {
-        var c = el('button', 'chip' + (b.id === platformBotId ? ' on' : ''));
+    api('/api/channels?limit=100').then(function (d) {
+      var channels = (d && d.channels) || [];
+      if (!channels.length) return;
+      if (!platformChannel || !channels.some(function (c) { return c.id === platformChannel.id; })) {
+        platformChannel = channels[0];
+      }
+      channels.forEach(function (ch) {
+        var c = el('button', 'chip' + (platformChannel && ch.id === platformChannel.id ? ' on' : ''));
         c.type = 'button';
-        c.textContent = b.name || b.id;
+        c.textContent = ch.name || ch.id;
         c.addEventListener('click', function () {
-          platformBotId = b.id;
-          platformThreadId = null;
-          setHistory([]);
+          platformChannel = ch;
           renderChat();
         });
         picker.appendChild(c);
       });
+      loadPlatformMessages($('#chat-messages'));
     }).catch(function () {});
   } else {
     var gw = settings.gatewayUrl || CFG.gatewayUrl || '';
@@ -566,7 +620,7 @@ function renderChat() {
   msgs.appendChild(mark);
 
   var history = getHistory();
-  if (!settings.openrouterKey) {
+  if (!platformMode() && !settings.openrouterKey) {
     var notice = el('div', 'chat-notice');
     var nh = el('h2'); nh.textContent = 'No API key yet'; notice.appendChild(nh);
     var np = el('p');
@@ -578,15 +632,19 @@ function renderChat() {
     notice.appendChild(goBtn);
     msgs.appendChild(notice);
   }
-  for (var i = 0; i < history.length; i++) {
-    msgs.appendChild(bubble(history[i].role, history[i].content));
-  }
-  if (settings.openrouterKey && !history.length) {
-    var wel = el('div', 'chat-welcome');
-    var wh = el('h2', 'fire'); wh.textContent = 'Hello, I\u2019m ' + brandName();
-    var wp = el('p'); wp.textContent = 'Ask me anything \u2014 I\u2019ll answer using the model you picked in Settings.';
-    wel.appendChild(wh); wel.appendChild(wp);
-    msgs.appendChild(wel);
+  if (platformMode()) {
+    if (platformChannel) loadPlatformMessages(msgs);
+  } else {
+    for (var i = 0; i < history.length; i++) {
+      msgs.appendChild(bubble(history[i].role, history[i].content));
+    }
+    if (settings.openrouterKey && !history.length) {
+      var wel = el('div', 'chat-welcome');
+      var wh = el('h2', 'fire'); wh.textContent = 'Hello, I\u2019m ' + brandName();
+      var wp = el('p'); wp.textContent = 'Ask me anything \u2014 I\u2019ll answer using the model you picked in Settings.';
+      wel.appendChild(wh); wel.appendChild(wp);
+      msgs.appendChild(wel);
+    }
   }
 
   /* composer */
@@ -1527,7 +1585,9 @@ function deploymentHas(path) {
 }
 function renderDeploymentFrame(path, title, sub) {
   view.innerHTML = '';
-  view.appendChild(pageHead(title, sub));
+  /* The vault and the graph are their own pages; give them the whole view
+     instead of a column beside a heading. */
+  view.className = 'view view-deploy';
   var box = el('div', 'frame-box');
   var frame = document.createElement('iframe');
   frame.className = 'deploy-frame';
