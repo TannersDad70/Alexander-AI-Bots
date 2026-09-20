@@ -6,5 +6,6 @@
   "container": "openbot",
   "vault": "/home/aais/Documents/AlexanderVault",
   "vault_site": "/home/aais/var/vault-site/alexander",
-  "env": "/home/aais/openbot/.env"
+  "env": "/home/aais/openbot/.env",
+  "back_url": "https://alexander-bot.jays-web.org/"
 }

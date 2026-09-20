@@ -40,6 +40,13 @@
     background: #0b1f42f2; border: 1px solid #2b5390; font-size: 14px; color: #eaf2ff;
     display: none; max-width: 320px;
   }
+  #legend {
+    position: fixed; right: 14px; bottom: 40px; z-index: 5;
+    background: #061530ee; border: 1px solid #173464; border-radius: 10px;
+    padding: 10px 12px; font-size: 13px; color: #cfe6ff; line-height: 1.3;
+  }
+  #legend .lg-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  #legend .lg-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   #panel {
     position: fixed; top: 58px; right: 14px; width: 264px; z-index: 7;
     background: #061530f7; border: 1px solid #2b5390; border-radius: 12px;
@@ -64,6 +71,7 @@
     #settings { margin-left: auto; }
     #count { font-size: 12px; }
     #hint { font-size: 11px; left: 10px; bottom: 8px; right: 10px; }
+    #legend { font-size: 11px; padding: 8px 9px; bottom: 34px; right: 8px; }
     #bar a.back { padding: 7px 11px; font-size: 13px; }
     #panel { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; }
   }
@@ -85,6 +93,7 @@
 <canvas id="cv"></canvas>
 <div id="hint">drag a dot &middot; scroll to zoom &middot; drag background to pan &middot; click a dot to open its note &middot; settings in the top bar</div>
 <div id="tip"></div>
+<div id="legend"></div>
 <script>
 const GRAPH = __GRAPH_JSON__;
 const VAULT_URL = "__VAULT_URL__";
@@ -394,6 +403,25 @@ document.getElementById('search').addEventListener('input', (e) => {
   filter = e.target.value.trim().toLowerCase();
 });
 document.getElementById('count').textContent = nodes.length + ' notes, ' + links.length + ' links';
+
+/* ---- legend: what the dot colours mean (from the graph data) ---- */
+(function renderLegend() {
+  var box = document.getElementById('legend');
+  var items = (GRAPH.legend || []);
+  if (!box || !items.length) return;
+  items.forEach(function (item) {
+    var row = document.createElement('div');
+    row.className = 'lg-row';
+    var dot = document.createElement('span');
+    dot.className = 'lg-dot';
+    dot.style.background = item.color;
+    var label = document.createElement('span');
+    label.textContent = item.label;
+    row.appendChild(dot);
+    row.appendChild(label);
+    box.appendChild(row);
+  });
+})();
 </script>
 </body>
 </html>

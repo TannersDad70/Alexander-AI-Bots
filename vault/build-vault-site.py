@@ -128,7 +128,38 @@ PAGE = """<!doctype html>
 LINK_WIKI = re.compile(r"!?\[\[([^\]|#]+)(?:[|#][^\]]*)?\]\]")
 LINK_MD = re.compile(r"\[[^\]]*\]\(([^)#\s]+\.md)(?:#[^)]*)?\)")
 
-PALETTE = ["#7fd1ff", "#ffd479", "#8ef0b8", "#c9a7ff", "#ff9fb0", "#7fe3d0", "#f2a86b", "#9fc0ff"]
+# One colour per kind of note, so the graph tells you what you are looking at
+# at a glance. The legend is built from the categories a vault actually holds.
+CATEGORIES = [
+    ("Bot activity log", "#ff9f68"),
+    ("Bot conversations", "#8ef0b8"),
+    ("Conversation topics", "#c9a7ff"),
+    ("Conversations index", "#7fd1ff"),
+    ("Bot channels", "#7fe3d0"),
+    ("Build notes (OpenCode)", "#ff9fb0"),
+    ("Read-me", "#9aa7b8"),
+    ("Bot computer files", "#f2a86b"),
+    ("Notes", "#9fc0ff"),
+]
+CATEGORY_COLOR = {label: color for label, color in CATEGORIES}
+
+
+def category_for(rel: str) -> str:
+    if rel == "Activity Log.md":
+        return "Bot activity log"
+    if rel == "Conversations.md":
+        return "Conversations index"
+    if rel.startswith("Conversations/"):
+        return "Bot conversations"
+    if rel == "Topics.md" or rel.startswith("Topics/"):
+        return "Conversation topics"
+    if rel == "README.md" or rel.endswith("/README.md"):
+        return "Read-me"
+    if rel.startswith("OpenCode/"):
+        return "Build notes (OpenCode)"
+    if rel.startswith("Computer/") or rel.startswith("computer/"):
+        return "Bot computer files"
+    return "Notes"
 
 
 def collect(vault: str):
@@ -139,8 +170,6 @@ def collect(vault: str):
             if name.lower().endswith(".md"):
                 full = os.path.join(root, name)
                 rel = os.path.relpath(full, vault)
-                if rel == "README.md":
-                    continue
                 notes.append((rel, full))
     notes.sort()
     return notes
@@ -148,18 +177,6 @@ def collect(vault: str):
 
 def slug(rel: str) -> str:
     return "note-" + "".join(ch if ch.isalnum() else "-" for ch in rel.lower())
-
-
-def color_for(rel: str, by_id: dict) -> str:
-    if rel == "Activity Log.md":
-        return "#ff9f68"
-    if rel == "Conversations.md":
-        return "#7fd1ff"
-    folder = os.path.dirname(rel)
-    if not folder:
-        return "#9fc0ff"
-    idx = sum(ord(c) for c in folder) % len(PALETTE)
-    return PALETTE[idx]
 
 
 def build_graph(vault: str, notes) -> dict:
@@ -171,6 +188,7 @@ def build_graph(vault: str, notes) -> dict:
     full_by_rel = {rel.lower(): full for rel, full in notes}
 
     nodes = []
+    seen = set()
     for rel, full in notes:
         try:
             text = open(full, encoding="utf-8", errors="replace").read()
@@ -196,10 +214,12 @@ def build_graph(vault: str, notes) -> dict:
                 continue
             if base_low in low:
                 links.add(target)
+        category = category_for(rel)
+        seen.add(category)
         nodes.append({
             "id": rel,
             "label": os.path.basename(rel)[:-3],
-            "color": color_for(rel, by_name),
+            "color": CATEGORY_COLOR[category],
             "anchor": "#" + slug(rel),
             "_links": sorted(links),
         })
@@ -220,10 +240,11 @@ def build_graph(vault: str, notes) -> dict:
             node_id = "channel:" + name
             if any(n["id"] == node_id for n in nodes):
                 continue
+            seen.add("Bot channels")
             nodes.append({
                 "id": node_id,
                 "label": name,
-                "color": "#7fe3d0",
+                "color": CATEGORY_COLOR["Bot channels"],
                 "anchor": conversations["anchor"],
                 "_links": [],
             })
@@ -234,11 +255,13 @@ def build_graph(vault: str, notes) -> dict:
         for target in n.get("_links", []):
             links.append({"source": n["id"], "target": target})
         n.pop("_links", None)
-    return {"nodes": nodes, "links": links}
+    legend = [{"label": label, "color": color}
+              for label, color in CATEGORIES if label in seen]
+    return {"nodes": nodes, "links": links, "legend": legend}
 
 
 def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str,
-          out_dir: str | None = None) -> None:
+          out_dir: str | None = None, back_url: str | None = None) -> None:
     out_dir = out_dir or os.path.join(OUT_ROOT, slug_name)
     os.makedirs(out_dir, exist_ok=True)
     notes = collect(vault)
@@ -260,12 +283,13 @@ def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str,
         )
 
     toc = "<ul>" + "".join(toc_items) + "</ul>" if toc_items else '<p class="empty">No notes yet.</p>'
-    # Back goes to the phone app's chat, which is where the vault is read from.
-    app_chat_url = app_url.rstrip("/") + "/app/#/chat"
+    # Back goes to the phone app's chat by default; a deployment can point it
+    # at its own app root with "back_url" in deployment.json.
+    back = (back_url or (app_url.rstrip("/") + "/app/#/chat")).strip()
     page = PAGE.format(
         title=html.escape(title),
         app_name=html.escape(app_name),
-        back_url=app_chat_url,
+        back_url=back,
         count=len(notes),
         toc=toc,
         notes="".join(bodies) or '<p class="empty">The bot has not written any notes yet.</p>',
@@ -285,7 +309,7 @@ def build(slug_name: str, app_name: str, title: str, vault: str, app_url: str,
     graph_page = (tpl
                   .replace("__TITLE__", html.escape(title))
                   .replace("__NAME__", html.escape(app_name))
-                  .replace("__APP_URL__", app_chat_url)
+                  .replace("__APP_URL__", back)
                   .replace("__VAULT_URL__", "./")
                   .replace("__GRAPH_JSON__", json.dumps(graph)))
     with open(os.path.join(out_dir, "graph.html"), "w", encoding="utf-8") as fh:
@@ -304,7 +328,7 @@ if __name__ == "__main__":
             cfg = json.load(fh)
         if os.path.isdir(cfg["vault"]):
             build(cfg["slug"], cfg["app_name"], cfg["title"], cfg["vault"],
-                  cfg["app_url"], cfg["vault_site"])
+                  cfg["app_url"], cfg["vault_site"], cfg.get("back_url"))
         print(f"{cfg['slug']}: vault site + graph rebuilt")
     else:
         os.makedirs(OUT_ROOT, exist_ok=True)
