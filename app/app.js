@@ -459,13 +459,15 @@ function doSendPlatform(userText, msgs, done) {
   if (channel) reportActivity(channel.id, userText, null);
 
   var full = '';
-  var socket = null;
   var finished = false;
+  /* Calls already run this turn, so an identical ask can be recognised as a repeat rather than
+     obeyed again: a Bot that asks for the same thing twice has not learned anything from the first
+     answer, and running it again only walks the same circle. */
+  var seenCalls = {};
 
   function finish(ok, message) {
     if (finished) return;
     finished = true;
-    try { if (socket) socket.close(); } catch (e) {}
     if (ok) {
       clearTypingDots(ab);
       setBubbleText(ab, full || '(the bot said nothing)');
@@ -481,48 +483,227 @@ function doSendPlatform(userText, msgs, done) {
     done();
   }
 
-  if (!channel || !channel.threadId) { finish(false, 'there is no conversation selected'); return; }
-  var runId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
-  fetch('/api/copilotkit/agent/' + encodeURIComponent(agentId) + '/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      threadId: channel.threadId, runId: runId, state: {},
-      messages: [{ id: runId, role: 'user', content: userText }],
-      tools: [], context: [], forwardedProps: {}
-    })
-  }).then(function (r) {
-    if (!r.ok) throw new Error('the deployment answered ' + r.status);
-    return r.json();
-  }).then(function (run) {
-    var realtime = (run && run.realtime) || {};
-    if (!run.joinToken || !realtime.clientUrl || !realtime.topic) {
-      throw new Error('the deployment did not open a reply stream');
+  /* A line in the transcript for one thing the bot does on its computer. */
+  function toolLine(label) {
+    var d = el('div', 'msg assistant tool-line');
+    var lab = el('div', 'msg-role');
+    lab.textContent = 'Computer';
+    d.appendChild(lab);
+    var body = el('div', 'msg-body');
+    body.textContent = label;
+    d.appendChild(body);
+    msgs.appendChild(d);
+    scrollChat(msgs);
+    return d;
+  }
+
+  /* Run the tools the bot asked for, in order, showing a line for each. */
+  function executeToolCalls(calls) {
+    var results = [];
+    var chain = Promise.resolve();
+    calls.forEach(function (call, i) {
+      chain = chain.then(function () {
+        var args = {};
+        try { args = call.args ? JSON.parse(call.args) : {}; } catch (e) { args = {}; }
+        var label = computerDescribe(call.name, args);
+        var line = toolLine(label + '…');
+        return computerExecute(agentId, call.name, args).then(function (outcome) {
+          setBubbleText(line, label + ' — ' + computerResultLine(call.name, outcome));
+          results[i] = outcome;
+          scrollChat(msgs);
+        });
+      });
+    });
+    return chain.then(function () { return results; });
+  }
+
+  /* One thread message in the wire shape the run endpoint expects. The platform stores a tool call
+     as {id, name, args}; the run input wants {id, type:'function', function:{name, arguments}}. */
+  function toWireMessage(m) {
+    var out = { id: m.id, role: m.role, content: m.content == null ? '' : m.content };
+    if (Array.isArray(m.toolCalls) && m.toolCalls.length) {
+      out.toolCalls = m.toolCalls.map(function (tc) {
+        return {
+          id: tc.id,
+          type: 'function',
+          function: { name: tc.name, arguments: (typeof tc.args === 'string' ? tc.args : JSON.stringify(tc.args || {})) }
+        };
+      });
     }
-    /* CopilotKit Intelligence speaks Phoenix Channels: connect with the join
-       token, join the thread topic, then read ag_ui_event deltas. */
-    socket = new WebSocket(realtime.clientUrl + '/websocket?vsn=2.0.0&join_token=' + encodeURIComponent(run.joinToken));
-    socket.onopen = function () {
-      socket.send(JSON.stringify([null, '1', realtime.topic, 'phx_join', {}]));
-    };
-    socket.onmessage = function (ev) {
-      var frame = null;
-      try { frame = JSON.parse(ev.data); } catch (e) { return; }
-      if (!frame || frame.length < 5 || frame[3] !== 'ag_ui_event') return;
-      var payload = frame[4] || {};
-      if (typeof payload.delta === 'string') {
-        full += payload.delta;
-        clearTypingDots(ab);
-        setBubbleText(ab, full);
-        scrollChat(msgs);
+    if (m.toolCallId) out.toolCallId = m.toolCallId;
+    return out;
+  }
+
+  /*
+   * The second run's messages: the whole conversation AS THE PLATFORM HAS IT, plus the tool results.
+   *
+   * It must be the platform's own ids, not a fresh copy of the call. Messages already in the thread
+   * are subtracted by id before anything is persisted; a hand-made copy of the assistant call carries
+   * a new id, so it is treated as new, stored again, and every turn leaves another unanswered copy of
+   * the same call in the transcript — which is exactly what made the model repeat itself. Loading the
+   * thread keeps the ids, so only the results are new.
+   */
+  function continuationMessages(calls, results) {
+    /*
+     * The thread's own messages, with the platform's ids, plus the new results.
+     *
+     * WAIT FOR THE CALL TO LAND FIRST. The run's assistant message is stored asynchronously, so a
+     * list read the moment RUN_FINISHED arrives can be missing the very call the result answers; the
+     * deployment then drops the result as a dangling one, the model never learns what happened, and
+     * it asks again — the repeat this exists to stop. Poll until every call is in the thread (or a
+     * deadline passes), then append.
+     */
+    var deadline = Date.now() + 10000;
+    function read() {
+      return api('/api/copilotkit/threads/' + encodeURIComponent(channel.threadId) + '/messages')
+        .then(function (d) {
+          var msgs = (d && (Array.isArray(d) ? d : d.messages)) || [];
+          var allIn = calls.every(function (c) {
+            return msgs.some(function (m) {
+              return m && m.role === 'assistant' && (m.toolCalls || []).some(function (t) { return t.id === c.id; });
+            });
+          });
+          if (!allIn && Date.now() < deadline) {
+            return new Promise(function (res) { setTimeout(res, 700); }).then(read);
+          }
+          var wire = msgs
+            .filter(function (m) { return m && (m.role === 'user' || m.role === 'assistant' || m.role === 'tool'); })
+            .map(toWireMessage);
+          calls.forEach(function (c, i) {
+            wire.push({
+              id: 'tr-' + c.id,
+              role: 'tool',
+              toolCallId: c.id,
+              content: JSON.stringify(results[i] || { ok: false, reason: 'no result' })
+            });
+          });
+          return wire;
+        });
+    }
+    return read();
+  }
+
+  /*
+   * ONE TURN. Post a run and read its reply stream.
+   *
+   * A bot's computer tools are FRONTEND tools: the run ENDS when the bot asks for one
+   * (TOOL_CALL_START/ARGS/END then RUN_FINISHED), we execute it here, and a SECOND run carries the
+   * result back. So this recurses once per tool call rather than finishing on RUN_FINISHED.
+   */
+  function runTurn(messages, depth) {
+    depth = depth || 0;
+    var runId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+    var socket = null;
+    var settled = false;
+    var toolCalls = [];
+    var pending = null;
+
+    function settle(ok, err) {
+      if (settled) return;
+      settled = true;
+      try { if (socket) socket.close(); } catch (e) {}
+      if (!ok) { finish(false, err); return; }
+      if (!toolCalls.length) { finish(true); return; }
+      /* Run each distinct call once. A repeat means the Bot is going round in circles. */
+      var fresh = [];
+      toolCalls.forEach(function (c) {
+        var k = c.name + '|' + (c.args || '');
+        if (seenCalls[k]) return;
+        seenCalls[k] = true;
+        fresh.push(c);
+      });
+      if (!fresh.length || depth >= 6) { finish(true); return; }
+      executeToolCalls(fresh).then(function (results) {
+        return continuationMessages(fresh, results);
+      }).then(function (msgs) {
+        runTurn(msgs, depth + 1);
+      }).catch(function (e) {
+        finish(false, 'a computer tool failed: ' + (e && e.message ? e.message : String(e)));
+      });
+    }
+
+    /* A second run lands while the first run's thread lock is still being released, and the
+       platform answers 409 THREAD_LOCK_FAILED — explicitly retryable. Back off and try again
+       rather than showing the person an error for a turn that is only a moment late. */
+    var body = JSON.stringify({
+      threadId: channel.threadId, runId: runId, state: {},
+      messages: messages,
+      /* Our hands on the bot's VM, the same way the desktop shell offers them. */
+      tools: (typeof COMPUTER_TOOLS !== 'undefined' ? COMPUTER_TOOLS : []),
+      context: [], forwardedProps: {}
+    });
+    function postRun(attempt) {
+      return fetch('/api/copilotkit/agent/' + encodeURIComponent(agentId) + '/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body
+      }).then(function (r) {
+        if (r.status === 409 && (attempt || 0) < 20) {
+          return new Promise(function (res) { setTimeout(res, 1500); })
+            .then(function () { return postRun((attempt || 0) + 1); });
+        }
+        if (!r.ok) throw new Error('the deployment answered ' + r.status);
+        return r.json();
+      });
+    }
+    postRun(0).then(function (run) {
+      var realtime = (run && run.realtime) || {};
+      if (!run.joinToken || !realtime.clientUrl || !realtime.topic) {
+        throw new Error('the deployment did not open a reply stream');
       }
-      if (payload.finishReason) finish(true);
-      if (payload.error) finish(false, payload.error.message || 'the bot stopped');
-    };
-    socket.onerror = function () { finish(false, 'the reply stream dropped'); };
-    socket.onclose = function () { if (!finished) finish(true); };
-    setTimeout(function () { finish(true); }, 120000);  /* a turn has a ceiling */
-  }).catch(function (e) { finish(false, e && e.message ? e.message : String(e)); });
+      /* CopilotKit Intelligence speaks Phoenix Channels: connect with the join
+         token, join the thread topic, then read ag_ui_event frames. */
+      /*
+       * WHICH RUN THIS SOCKET IS LISTENING FOR.
+       *
+       * Joining the thread's topic can hand this socket the PREVIOUS run's stream again — the same
+       * events, carrying the same runId — and a replayed RUN_FINISHED ends this turn before it has
+       * streamed anything. What the person then sees is the last run's preamble instead of this
+       * run's answer, and the tool call it replayed is run a second time. Every event names its run,
+       * so anything from another run is dropped.
+       */
+      var expectedRunId = run.runId || runId;
+      socket = new WebSocket(realtime.clientUrl + '/websocket?vsn=2.0.0&join_token=' + encodeURIComponent(run.joinToken));
+      socket.onopen = function () {
+        socket.send(JSON.stringify([null, '1', realtime.topic, 'phx_join', {}]));
+      };
+      socket.onmessage = function (ev) {
+        var frame = null;
+        try { frame = JSON.parse(ev.data); } catch (e) { return; }
+        if (!frame || frame.length < 5 || frame[3] !== 'ag_ui_event') return;
+        var payload = frame[4] || {};
+        var type = payload.type;
+        /* Another run's event, replayed onto this socket. Not ours to act on. */
+        if (payload.runId && payload.runId !== expectedRunId) return;
+        if (type === 'TOOL_CALL_START') {
+          pending = { id: payload.toolCallId, name: payload.toolCallName, args: '' };
+          toolCalls.push(pending);
+          return;
+        }
+        if (type === 'TOOL_CALL_ARGS') {
+          if (pending && payload.toolCallId === pending.id) pending.args += (payload.delta || '');
+          return;
+        }
+        if (type === 'TOOL_CALL_END') { pending = null; return; }
+        if (type === 'RUN_ERROR') { settle(false, payload.message || 'the bot stopped'); return; }
+        if (type === 'RUN_FINISHED') { settle(true); return; }
+        if (typeof payload.delta === 'string') {
+          full += payload.delta;
+          clearTypingDots(ab);
+          setBubbleText(ab, full);
+          scrollChat(msgs);
+        }
+        if (payload.finishReason) settle(true);
+        if (payload.error) settle(false, payload.error.message || 'the bot stopped');
+      };
+      socket.onerror = function () { settle(false, 'the reply stream dropped'); };
+      socket.onclose = function () { settle(true); };
+      setTimeout(function () { settle(true); }, 120000);  /* a turn has a ceiling */
+    }).catch(function (e) { finish(false, e && e.message ? e.message : String(e)); });
+  }
+
+  if (!channel || !channel.threadId) { finish(false, 'there is no conversation selected'); return; }
+  runTurn([{ id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()), role: 'user', content: userText }]);
 }
 
 function renderChat() {
